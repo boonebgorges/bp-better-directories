@@ -33,7 +33,7 @@ class BPBD {
 		if ( function_exists( 'bp_is_current_component' ) ) {
 			$is_members = bp_is_current_component( 'members' );
 		} else {
-			$is_members = $bp->members->slug == bp_current_component();
+			$is_members = BP_MEMBERS_SLUG == bp_current_component();
 		}
 		
 		if ( $is_members && !bp_is_single_item() ) {			
@@ -139,7 +139,7 @@ class BPBD {
 					
 			$s = join( ' ', (array)$sql );
 		}
-		
+		echo $s . "<br />";
 		return $s;
 	}	
 	
@@ -151,7 +151,7 @@ class BPBD {
 		
 		?>
 		
-		<form id="bpbd-filter-form" method="get" action="http://boone.cool/yolanda/members-2/">
+		<form id="bpbd-filter-form" method="get" action="">
 		
 		<div id="bpbd-filters" style="color:#000;height: 600px">
 			<ul>
