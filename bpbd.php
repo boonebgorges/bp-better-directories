@@ -170,7 +170,7 @@ class BPBD {
 	function render_field( $field ) {			
 		?>
 		
-		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['slug'] ) ?></label>
+		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['name'] ) ?></label>
 		
 		<?php
 		
