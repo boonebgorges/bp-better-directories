@@ -2,6 +2,7 @@
 
 class BPBD {
 	var $get_params = array();
+	var $filterable_fields = array();
 	
 	/**
 	 * PHP 4 constructor
@@ -48,12 +49,15 @@ class BPBD {
 	function setup_get_params() {
 		$filterable_fields = get_blog_option( BP_ROOT_BLOG, 'bpdb_fields' );
 		
+		// Set so it can be used object-wide
+		$this->filterable_fields = $filterable_fields;
+		
 		if ( is_array( $filterable_fields ) ) {
 			$filterable_keys = array_keys( $filterable_fields );
 		}
 		
 		foreach ( (array)$filterable_keys as $filterable_key ) {
-			if ( isset( $_GET[$filterable_key] ) ) {
+			if ( !empty( $_GET[$filterable_key] ) ) {
 				// Get the field id for keying the array
 				$field_id = $filterable_fields[$filterable_key]['id'];
 				
@@ -107,11 +111,72 @@ class BPBD {
 	}	
 	
 	function filter_ui() {
-	?>
-		<div id="bpbd-filters" style="color:#000;height: 100px">
+		if ( empty( $this->filterable_fields ) ) {
+			// Nothing to see here.
+			return;
+		}
 		
+		?>
+		
+		<form id="bpbd-filter-form" method="get" action="http://boone.cool/yolanda/members-2/">
+		
+		<div id="bpbd-filters" style="color:#000;height: 200px">
+			<ul>
+			<?php foreach ( $this->filterable_fields as $slug => $field ) : ?>
+				<li>
+					<?php $this->render_field( $field ) ?>
+				</li>
+			<?php endforeach ?>
+			</ul>
+		
+			<input type="submit" class="button" value="<?php _e( 'Submit', 'bpdb' ) ?>" />
 		</div>
-	<?php
+		
+		</form>
+		<?php
+	}
+	
+	function render_field( $field ) {
+		//var_dump( $field );
+		
+		// Display the field based on type
+		// In the future you'll be able to override this
+		switch ( $field['type'] ) {
+			case 'textbox' :
+				$this->render_field_textbox( $field );
+				break;
+			case 'selectbox' :
+				$this->render_field_selectbox( $field );
+				break;
+		}
+	}
+	
+	function render_field_textbox( $field ) {
+		?>
+		
+		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['name'] ) ?></label> <input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" />
+		
+		<?php
+	}
+	
+	function render_field_selectbox( $new_field ) {
+		global $field;
+		
+		// Cheating, so that I can use the old profile filters
+		$old_field = $field;
+		$field = new BP_XProfile_Field( $new_field['id'] );
+		
+		?>
+		
+		<label for="<?php echo esc_attr( $new_field['slug'] ) ?>"><?php echo esc_html( $new_field['slug'] ) ?></label>
+		<select name="<?php echo esc_attr( $new_field['slug'] ) ?>">
+			<?php bp_the_profile_field_options( 'selectbox' ) ?>
+		</select>
+		
+		<?php
+		
+		// Put right what once went wrong
+		$field = $old_field;
 	}
 }
 
