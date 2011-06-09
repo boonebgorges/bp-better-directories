@@ -89,8 +89,6 @@ class BPBD {
 		$bpbd_where = array();
 		$counter = 1;
 		
-		//var_dump( $this->get_params ); die();
-		
 		// Build the additional queries
 		foreach( $this->get_params as $field_id => $field ) {
 			$table_shortname = 'bpbd' . $counter;
@@ -139,7 +137,7 @@ class BPBD {
 					
 			$s = join( ' ', (array)$sql );
 		}
-		echo $s . "<br />";
+		
 		return $s;
 	}	
 	
