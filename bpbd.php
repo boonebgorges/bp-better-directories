@@ -89,6 +89,8 @@ class BPBD {
 		$bpbd_where = array();
 		$counter = 1;
 		
+		//var_dump( $this->get_params ); die();
+		
 		// Build the additional queries
 		foreach( $this->get_params as $field_id => $field ) {
 			$table_shortname = 'bpbd' . $counter;
@@ -99,12 +101,34 @@ class BPBD {
 			
 			$bpbd_from[] = $wpdb->prepare( "INNER JOIN {$bp->profile->table_name_data} {$table_shortname} ON ({$table_shortname}.user_id = u.ID)" );
 			
-			// todo: LIKE vs IN vs = (maybe with NOTs as well?)
-			$bpbd_where[] = $wpdb->prepare( "AND {$table_shortname}.field_id = %s AND {$table_shortname}.value = %s", $field['id'], $field['value'] );
+			// Figure out the right operators and values for the WHERE clause
+			if ( 'textbox' == $field['type'] ) {
+				// 'textbox' always gets LIKE
+				$op = "LIKE";
+				$value = $wpdb->prepare( "%s", '%%' . like_escape( $field['value'] ) . '%%' );
+				
+			} else if ( 'multiselectbox' == $field['type'] || 'checkbox' == $field['type'] ) {
+				// 'multiselectbox' and 'checkbox' are arrays, and get IN
+				$op = "IN";
+				
+				// The reason I use {$value} below and not the prepare() syntax is
+				// because of the IN syntax. Barf
+				$value = array();
+				foreach( $field['value'] as $val ) {
+					$value[] = '"' . $val . '"';
+				}
+				$value = '(' . implode( ',', $value ) . ')';
+			} else {
+				// Everything else is an exact match
+				$op = '=';
+				$value = $wpdb->prepare( "%s", $field['value'] );
+			}
+			
+			$bpbd_where[] = $wpdb->prepare( "AND {$table_shortname}.field_id = %d AND {$table_shortname}.value {$op} {$value}", $field['id'] );
 			
 			$counter++;
 		}
-
+		
 		if ( !empty( $bpbd_from ) && !empty( $bpbd_where ) ) {
 			// The total_sql query won't have this index
 			if ( isset( $sql['select_main'] ) )
@@ -190,9 +214,9 @@ class BPBD {
 			case 'multiselectbox' :
 				?>
 				
-				<select name="<?php echo esc_attr( $field['slug'] ) ?>" multiple="multiple">
+				<select name="<?php echo esc_attr( $field['slug'] ) ?>[]" multiple="multiple">
 					<?php foreach( $options as $option ) : ?>
-						<option <?php selected( $value, $option->name, true ) ?>><?php echo $option->name ?></option>
+						<option <?php if ( is_array( $value ) && in_array( $option->name, $value ) ) : ?>selected="selected"<?php endif ?>/><?php echo $option->name ?></option>
 					<?php endforeach ?>
 				</select>
 				
@@ -200,13 +224,12 @@ class BPBD {
 				
 				break;
 			case 'checkbox' :
-			
 				?>
 				
 				<ul>
 				<?php foreach ( $options as $option ) : ?>
 					<li>
-						<input type="checkbox" name="<?php echo esc_attr( $field['slug'] ) ?>[]" value="<?php echo urlencode( $option->name ) ?>" <?php if ( in_array( $option->name, $value ) ) : ?>checked="checked"<?php endif ?>/> <?php echo esc_html( $option->name ) ?>
+						<input type="checkbox" name="<?php echo esc_attr( $field['slug'] ) ?>[]" value="<?php echo urlencode( $option->name ) ?>" <?php if ( is_array( $value ) && in_array( $option->name, $value ) ) : ?>checked="checked"<?php endif ?>/> <?php echo esc_html( $option->name ) ?>
 					</li>
 				<?php endforeach ?>
 				</ul>
