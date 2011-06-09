@@ -34,11 +34,17 @@ class BPBD_Admin {
 		$this->catch_form_save();
 		
 		$saved_fields = get_blog_option( BP_ROOT_BLOG, 'bpdb_fields' );
-		
+
 		// Which fields should be checked?
+		// I am not thrilled about this mode of rejiggering data. But I've optimized for
+		// front-end use
 		$checked_fields = array();
 		foreach( $saved_fields as $saved_field ) {
-			$checked_fields[] = $saved_field['id'];
+			$id = $saved_field['id'];
+			$checked_fields[$id] = array(
+				'id'	=> $id,
+				'type'	=> $saved_field['type']
+			);
 		}
 		
 		$groups = BP_XProfile_Group::get( array(
@@ -56,18 +62,23 @@ class BPBD_Admin {
 				<?php if ( !empty( $group->fields ) ) : ?>
 					<ul>
 					<?php foreach ( $group->fields as $field ) : ?>
-						<?php $checked = in_array( $field->id, $checked_fields ) !== false ? 'checked="checked" ' : ''; ?>
+						<?php 
+						
+						$checked = isset( $checked_fields[$field->id] ) !== false ? 'checked="checked" ' : ''; 
+						$type = isset( $checked_fields[$field->id]['type'] ) ? $checked_fields[$field->id]['type'] : false;
+						
+						?>
 						
 						<li>
 							<input type="checkbox" name="fields[<?php echo $field->id ?>]" id="field-<?php echo $field->id ?>" class="field field-group-<?php $group->id ?>" <?php echo $checked ?>/> <?php echo esc_html( $field->name ) ?>
 							
 							<?php if ( $checked ) : ?>
 								<?php $options = $this->field_type_options( $field->type ) ?>
-								
+										
 								<div class="field-type-box">
 									<select name="field_types[<?php echo $field->id ?>]">
 									<?php foreach ( $options as $name => $title ) : ?>
-										<option value="<?php echo esc_attr( $name ) ?>"><?php echo esc_html( $title ) ?></option>
+										<option value="<?php echo esc_attr( $name ) ?>" <?php selected( $type, $name ) ?>><?php echo esc_html( $title ) ?></option>
 									<?php endforeach ?>
 									</select>
 								</div>
@@ -127,6 +138,7 @@ class BPBD_Admin {
 				$field = new BP_XProfile_Field( $field_id );
 				
 				$title = sanitize_title( $field->name );
+				$type = isset( $_POST['field_types'][$field_id] ) ? $_POST['field_types'][$field_id] : $field->type;
 				
 				$fields[$title] = array(
 					'id'	=> $field_id,

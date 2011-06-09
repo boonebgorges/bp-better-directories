@@ -65,7 +65,16 @@ class BPBD {
 				$this->get_params[$field_id] = $filterable_fields[$filterable_key];
 				
 				// Add the filtered value from $_GET
-				$this->get_params[$field_id]['value'] = urldecode( $_GET[$filterable_key] );
+				if ( is_array( $_GET[$filterable_key] ) ) {
+					$values = array();
+					foreach( $_GET[$filterable_key] as $key => $value ) {
+						$values[$key] = urldecode( $value );
+					}
+				} else {
+					$values = urldecode( $_GET[$filterable_key] );
+				}
+				
+				$this->get_params[$field_id]['value'] = $values;
 			}
 		}
 		
@@ -120,7 +129,7 @@ class BPBD {
 		
 		<form id="bpbd-filter-form" method="get" action="http://boone.cool/yolanda/members-2/">
 		
-		<div id="bpbd-filters" style="color:#000;height: 200px">
+		<div id="bpbd-filters" style="color:#000;height: 600px">
 			<ul>
 			<?php foreach ( $this->filterable_fields as $slug => $field ) : ?>
 				<li>
@@ -136,48 +145,88 @@ class BPBD {
 		<?php
 	}
 	
-	function render_field( $field ) {
-		//var_dump( $field );
+	function render_field( $field ) {			
+		?>
 		
+		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['slug'] ) ?></label>
+		
+		<?php
+		
+		$field_data = new BP_XProfile_Field( $field['id'] );
+
+		$options = $field_data->get_children();
+
+		// Get the current value for this item, if any, out of the $_GET params
+		$value = isset( $this->get_params[$field['id']] ) ? $this->get_params[$field['id']]['value'] : false;
+
 		// Display the field based on type
-		// In the future you'll be able to override this
 		switch ( $field['type'] ) {
-			case 'textbox' :
-				$this->render_field_textbox( $field );
+			case 'radio' :
+				?>
+				
+				<ul>
+				<?php foreach ( $options as $option ) : ?>
+					<li>
+						<input type="radio" name="<?php echo esc_attr( $field['slug'] ) ?>" value="<?php echo urlencode( $option->name ) ?>" <?php checked( $value, $option->name, true ) ?>/> <?php echo esc_html( $option->name ) ?>
+					</li>
+				<?php endforeach ?>
+				</ul>
+				
+				<?php
 				break;
 			case 'selectbox' :
-				$this->render_field_selectbox( $field );
+				?>
+				
+				<select name="<?php echo esc_attr( $field['slug'] ) ?>">
+					<option value="">--------</option>
+					<?php foreach( $options as $option ) : ?>
+						<option <?php selected( $value, $option->name, true ) ?>><?php echo $option->name ?></option>
+					<?php endforeach ?>
+				</select>
+				
+				<?php
+				
+				break;
+			case 'multiselectbox' :
+				?>
+				
+				<select name="<?php echo esc_attr( $field['slug'] ) ?>" multiple="multiple">
+					<?php foreach( $options as $option ) : ?>
+						<option <?php selected( $value, $option->name, true ) ?>><?php echo $option->name ?></option>
+					<?php endforeach ?>
+				</select>
+				
+				<?php
+				
+				break;
+			case 'checkbox' :
+			
+				?>
+				
+				<ul>
+				<?php foreach ( $options as $option ) : ?>
+					<li>
+						<input type="checkbox" name="<?php echo esc_attr( $field['slug'] ) ?>[]" value="<?php echo urlencode( $option->name ) ?>" <?php if ( in_array( $option->name, $value ) ) : ?>checked="checked"<?php endif ?>/> <?php echo esc_html( $option->name ) ?>
+					</li>
+				<?php endforeach ?>
+				</ul>
+				
+				<?php
+				break;
+			case 'textbox' :
+				?>
+
+				<input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" value="<?php echo esc_html( $value ) ?>"/>
+				
+				<?php
+				
 				break;
 		}
 	}
 	
-	function render_field_textbox( $field ) {
-		?>
-		
-		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['name'] ) ?></label> <input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" />
-		
-		<?php
-	}
+
 	
-	function render_field_selectbox( $new_field ) {
-		global $field;
-		
-		// Cheating, so that I can use the old profile filters
-		$old_field = $field;
-		$field = new BP_XProfile_Field( $new_field['id'] );
-		
-		?>
-		
-		<label for="<?php echo esc_attr( $new_field['slug'] ) ?>"><?php echo esc_html( $new_field['slug'] ) ?></label>
-		<select name="<?php echo esc_attr( $new_field['slug'] ) ?>">
-			<?php bp_the_profile_field_options( 'selectbox' ) ?>
-		</select>
-		
-		<?php
-		
-		// Put right what once went wrong
-		$field = $old_field;
-	}
+
 }
 
 ?>
