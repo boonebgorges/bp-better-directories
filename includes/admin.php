@@ -60,6 +60,18 @@ class BPBD_Admin {
 						
 						<li>
 							<input type="checkbox" name="fields[<?php echo $field->id ?>]" id="field-<?php echo $field->id ?>" class="field field-group-<?php $group->id ?>" <?php echo $checked ?>/> <?php echo esc_html( $field->name ) ?>
+							
+							<?php if ( $checked ) : ?>
+								<?php $options = $this->field_type_options( $field->type ) ?>
+								
+								<div class="field-type-box">
+									<select name="field_types[<?php echo $field->id ?>]">
+									<?php foreach ( $options as $name => $title ) : ?>
+										<option value="<?php echo esc_attr( $name ) ?>"><?php echo esc_html( $title ) ?></option>
+									<?php endforeach ?>
+									</select>
+								</div>
+							<?php endif ?>
 						</li>
 					<?php endforeach ?>
 					</ul>
@@ -73,6 +85,32 @@ class BPBD_Admin {
 		</form>
 		<?php
 
+	}
+	
+	/**
+	 * Which filter types should be available for this field type?
+	 */
+	function field_type_options( $type ) {
+		switch ( $type ) {
+			case 'textbox' :
+			case 'textarea' :
+				$types = array(
+					'textbox' => __( 'Text search', 'bpbd' )
+				);
+				break;
+			
+			default :
+				$types = array(
+					'radio' 	 => __( 'Radio buttons', 'bpbd' ),
+					'selectbox' 	 => __( 'Dropdown', 'bpbd' ),
+					'multiselectbox' => __( 'Multiple select box', 'bpbd' ),
+					'checkbox'       => __( 'Checkboxes', 'bpbd' ),
+					'textbox'	 => __( 'Text search', 'bpbd' )
+				);
+				break;
+		}
+	
+		return $types;
 	}
 	
 	function catch_form_save() {
@@ -93,7 +131,7 @@ class BPBD_Admin {
 				$fields[$title] = array(
 					'id'	=> $field_id,
 					'name'	=> $field->name,
-					'type'	=> $field->type,
+					'type'	=> $_POST['field_types'][$field_id],
 					'slug'	=> $title
 				);	
 			}
