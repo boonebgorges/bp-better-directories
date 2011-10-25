@@ -24,6 +24,10 @@ class BPBD {
 		$this->setup_get_params();
 		
 		add_action( 'wp', array( $this, 'setup' ), 1 );
+		
+		add_action( 'wp_print_styles', array( $this, 'enqueue_styles' ) );
+		
+		define( 'BPBD_INSTALL_URL', plugins_url() . '/bp-better-directories/' );
 	}
 	
 	function setup() {
@@ -94,7 +98,7 @@ class BPBD {
 		// Build the additional queries
 		foreach( $this->get_params as $field_id => $field ) {
 			$table_shortname = 'bpbd' . $counter;
-						
+		
 			// Since we're already doing the join, let's bring the extra content into
 			// the template. This'll be unset in the total_users filter
 			$bpbd_select[] = $wpdb->prepare( ", {$table_shortname}.value as {$field['slug']}" );
@@ -106,25 +110,24 @@ class BPBD {
 				// 'textbox' always gets LIKE
 				$op = "LIKE";
 				$value = $wpdb->prepare( "%s", '%%' . like_escape( $field['value'] ) . '%%' );
+				$where = $op . ' ' . $value;
 				
 			} else if ( 'multiselectbox' == $field['type'] || 'checkbox' == $field['type'] ) {
-				// 'multiselectbox' and 'checkbox' are arrays, and get IN
-				$op = "IN";
-				
-				// The reason I use {$value} below and not the prepare() syntax is
-				// because of the IN syntax. Barf
-				$value = array();
+				// Multiselect and checkbox values may be stored as arrays, so we
+				// have to do multiple LIKEs. Hack alert
+				$clauses = array();
 				foreach( $field['value'] as $val ) {
-					$value[] = '"' . $val . '"';
+					$clauses[] = 'LIKE "%%' . $val . '%%"';
 				}
-				$value = '(' . implode( ',', $value ) . ')';
+				$where = implode( ' OR ', $clauses );
 			} else {
 				// Everything else is an exact match
 				$op = '=';
 				$value = $wpdb->prepare( "%s", $field['value'] );
+				$where = $op . ' ' . $value;
 			}
 			
-			$bpbd_where[] = $wpdb->prepare( "AND {$table_shortname}.field_id = %d AND {$table_shortname}.value {$op} {$value}", $field['id'] );
+			$bpbd_where[] = $wpdb->prepare( "AND {$table_shortname}.field_id = %d AND {$table_shortname}.value {$where}", $field['id'] );
 			
 			$counter++;
 		}
@@ -150,10 +153,12 @@ class BPBD {
 		}
 		
 		?>
+	
+		<form id="bpbd-filter-form" method="get" action="<?php bp_root_domain() ?>/<?php bp_members_root_slug() ?>">
 		
-		<form id="bpbd-filter-form" method="get" action="http://boone.cool/yolanda/members-2/">
+		<div id="bpbd-filters">
+			<h4><?php _e( 'Member Filter', 'bpbd' ) ?></h4>
 		
-		<div id="bpbd-filters" style="color:#000;height: 600px">
 			<ul>
 			<?php foreach ( $this->filterable_fields as $slug => $field ) : ?>
 				<li>
@@ -227,7 +232,7 @@ class BPBD {
 				?>
 				
 				<ul>
-				<?php foreach ( $options as $option ) : ?>
+				<?php foreach ( (array)$options as $option ) : ?>
 					<li>
 						<input type="checkbox" name="<?php echo esc_attr( $field['slug'] ) ?>[]" value="<?php echo urlencode( $option->name ) ?>" <?php if ( is_array( $value ) && in_array( $option->name, $value ) ) : ?>checked="checked"<?php endif ?>/> <?php echo esc_html( $option->name ) ?>
 					</li>
@@ -247,7 +252,11 @@ class BPBD {
 		}
 	}
 	
-
+	function enqueue_styles() {
+		if ( bp_is_directory() && bp_is_members_component() ) {
+			wp_enqueue_style( 'bpbd', BPBD_INSTALL_URL . '/includes/css/style.css' ); 
+		}
+	}
 	
 
 }
