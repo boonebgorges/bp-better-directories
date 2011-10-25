@@ -1,5 +1,7 @@
 jQuery(document).ready(function($) {
 	$('#bpbd-filters input[type="checkbox"]').live('click', function(value){
+		$('body div#content').mask('Loading...');
+		$('div.loadmask-msg').css('top', '300px');
 		do_query();
 	});
 	
@@ -35,6 +37,7 @@ function do_query() {
 	jQuery.post(ajaxurl,args, function(response){
 		var object = 'members';
 		bp_filter_request( object, jq.cookie('bp-' + object + '-filter'), jq.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, jq.cookie('bp-' + object + '-extras') );
+		
+		jQuery('body div#content').unmask();
 	});
-
 }

@@ -278,13 +278,15 @@ class BPBD {
 	
 	function enqueue_styles() {
 		if ( bp_is_directory() && bp_is_members_component() ) {
+			wp_enqueue_style( 'jquery-loadmask-css', BPBD_INSTALL_URL . '/includes/lib/jquery.loadmask/jquery.loadmask.css' ); 
 			wp_enqueue_style( 'bpbd-css', BPBD_INSTALL_URL . '/includes/css/style.css' ); 
 		}
 	}
 	
 	function enqueue_scripts() {
 		if ( bp_is_directory() && bp_is_members_component() ) {
-			wp_enqueue_script( 'bpbd-js', BPBD_INSTALL_URL . '/includes/js/bpbd.js', array( 'jquery', 'dtheme-ajax-js' ) ); 
+			wp_enqueue_script( 'jquery-loadmask', BPBD_INSTALL_URL . '/includes/lib/jquery.loadmask/jquery.loadmask.min.js', array( 'jquery' ) );	
+			wp_enqueue_script( 'bpbd-js', BPBD_INSTALL_URL . '/includes/js/bpbd.js', array( 'jquery', 'dtheme-ajax-js', 'jquery-loadmask' ) );
 		}
 	}
 	
