@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: BP Better Directories
-Plugin URI: http://github.com/boonebgorges/buddypress-docs
-Description: Adds collaborative Docs to BuddyPress
+Plugin URI: http://github.com/boonebgorges/bp-better-directories
+Description: Adds sophisticated search and filters to your BuddyPress member directory
 Version: 1.0
 Author: Boone B Gorges
 Author URI: http://boonebgorges.com
@@ -19,8 +19,6 @@ define( 'BPBD_VERSION', '1.0' );
  * @since 1.0
  */
 function bpbd_init() {
-	global $bp_docs, $wpdb;
-	
 	if ( !function_exists( 'bp_is_active' ) || !bp_is_active( 'xprofile' ) )
 		return;
 	

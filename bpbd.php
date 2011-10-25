@@ -21,13 +21,18 @@ class BPBD {
 	 * @since 1.0
 	 */	
 	function __construct() {
+		define( 'BPBD_INSTALL_DIR', trailingslashit( dirname(__FILE__) ) );
+		define( 'BPBD_INSTALL_URL', plugins_url() . '/bp-better-directories/' );
+		
+		if ( version_compare( BP_VERSION, '1.3', '<' ) ) {
+			require( BPBD_INSTALL_DIR . 'includes/1.5-abstraction.php' );
+		}
+	
 		$this->setup_get_params();
 		
 		add_action( 'wp', array( $this, 'setup' ), 1 );
 		
 		add_action( 'wp_print_styles', array( $this, 'enqueue_styles' ) );
-		
-		define( 'BPBD_INSTALL_URL', plugins_url() . '/bp-better-directories/' );
 	}
 	
 	function setup() {
