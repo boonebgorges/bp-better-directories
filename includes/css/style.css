@@ -1,8 +1,36 @@
 #bpbd-filters {
-	margin-bottom: 40px;
+	margin-top: 70px;
 	vertical-align: top;
+	width: 300px;
+	float: left;
+	overflow: hidden;
 }
 
 #bpbd-filters label {
 	display: block;
+}
+
+
+
+
+/* BP-DEFAULT OVERRIDES */
+body.members.directory #subnav, 
+body.members.directory #members-dir-list {
+	padding-left: 325px;
+}
+
+form#members-directory-form h3 {
+	margin-left: -300px;
+}
+
+body.members.directory div.item-list-tabs {
+	clear: none;
+}
+
+div#members-dir-list ul.item-list li {
+	clear: none;
+}
+
+div#members-dir-list ul.item-list li div.clear {
+	clear:none;
 }

@@ -33,6 +33,7 @@ class BPBD {
 		add_action( 'wp', array( $this, 'setup' ), 1 );
 		
 		add_action( 'wp_print_styles', array( $this, 'enqueue_styles' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 	
 	function setup() {
@@ -51,7 +52,7 @@ class BPBD {
 			add_filter( 'bp_core_get_total_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
 			
 			// Add the filter UI
-			add_action( 'bp_before_members_loop', array( $this, 'filter_ui' ) );
+			add_action( 'bp_before_directory_members', array( $this, 'filter_ui' ) );
 		}
 	}
 	
@@ -160,7 +161,7 @@ class BPBD {
 		<form id="bpbd-filter-form" method="get" action="<?php bp_root_domain() ?>/<?php bp_members_root_slug() ?>">
 		
 		<div id="bpbd-filters">
-			<h4><?php _e( 'Member Filter', 'bpbd' ) ?></h4>
+			<h4><?php _e( 'Narrow Results', 'bpbd' ) ?></h4>
 		
 			<ul>
 			<?php foreach ( $this->filterable_fields as $slug => $field ) : ?>
@@ -257,7 +258,13 @@ class BPBD {
 	
 	function enqueue_styles() {
 		if ( bp_is_directory() && bp_is_members_component() ) {
-			wp_enqueue_style( 'bpbd', BPBD_INSTALL_URL . '/includes/css/style.css' ); 
+			wp_enqueue_style( 'bpbd-css', BPBD_INSTALL_URL . '/includes/css/style.css' ); 
+		}
+	}
+	
+	function enqueue_scripts() {
+		if ( bp_is_directory() && bp_is_members_component() ) {
+			wp_enqueue_script( 'bpbd-js', BPBD_INSTALL_URL . '/includes/js/bpbd.js', array( 'jquery', 'dtheme-ajax-js' ) ); 
 		}
 	}
 	
