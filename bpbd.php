@@ -30,7 +30,11 @@ class BPBD {
 	
 		$this->setup_get_params();
 		
-		add_action( 'wp', array( $this, 'setup' ), 1 );
+		add_action( 'init', array( $this, 'setup' ) );
+		
+		add_action( 'wp_ajax_members_filter', array( $this, 'filter_ajax_requests' ), 1 );
+		
+		add_action( 'wp_ajax_bpbd_filter', array( $this, 'filter_ajax' ) );
 		
 		add_action( 'wp_print_styles', array( $this, 'enqueue_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -66,8 +70,15 @@ class BPBD {
 			$filterable_keys = array_keys( $filterable_fields );
 		}
 		
+		$potential_fields = isset( $_GET ) ? $_GET : array();
+		
+		$cookie_fields = (array)json_decode( stripslashes( $_COOKIE['bpbd-filters'] ) );
+		
+		if ( isset( $_COOKIE['bpbd-filters'] ) )
+			$potential_fields = array_merge( $potential_fields, $cookie_fields );
+		
 		foreach ( (array)$filterable_keys as $filterable_key ) {
-			if ( !empty( $_GET[$filterable_key] ) ) {
+			if ( !empty( $potential_fields[$filterable_key] ) ) {
 				// Get the field id for keying the array
 				$field_id = $filterable_fields[$filterable_key]['id'];
 				
@@ -75,13 +86,13 @@ class BPBD {
 				$this->get_params[$field_id] = $filterable_fields[$filterable_key];
 				
 				// Add the filtered value from $_GET
-				if ( is_array( $_GET[$filterable_key] ) ) {
+				if ( is_array( $potential_fields[$filterable_key] ) ) {
 					$values = array();
-					foreach( $_GET[$filterable_key] as $key => $value ) {
+					foreach( $potential_fields[$filterable_key] as $key => $value ) {
 						$values[$key] = urldecode( $value );
 					}
 				} else {
-					$values = urldecode( $_GET[$filterable_key] );
+					$values = urldecode( $potential_fields[$filterable_key] );
 				}
 				
 				$this->get_params[$field_id]['value'] = $values;
@@ -114,24 +125,24 @@ class BPBD {
 				// 'textbox' always gets LIKE
 				$op = "LIKE";
 				$value = $wpdb->prepare( "%s", '%%' . like_escape( $field['value'] ) . '%%' );
-				$where = $op . ' ' . $value;
+				$where = $table_shortname . '.value' . $op . ' ' . $value;
 				
 			} else if ( 'multiselectbox' == $field['type'] || 'checkbox' == $field['type'] ) {
 				// Multiselect and checkbox values may be stored as arrays, so we
 				// have to do multiple LIKEs. Hack alert
 				$clauses = array();
 				foreach( $field['value'] as $val ) {
-					$clauses[] = 'LIKE "%%' . $val . '%%"';
+					$clauses[] = $table_shortname . '.value LIKE "%%' . $val . '%%"';
 				}
 				$where = implode( ' OR ', $clauses );
 			} else {
 				// Everything else is an exact match
 				$op = '=';
 				$value = $wpdb->prepare( "%s", $field['value'] );
-				$where = $op . ' ' . $value;
+				$where = $table_shortname . '.value' . $op . ' ' . $value;
 			}
 			
-			$bpbd_where[] = $wpdb->prepare( "AND {$table_shortname}.field_id = %d AND {$table_shortname}.value {$where}", $field['id'] );
+			$bpbd_where[] = $wpdb->prepare( "AND {$table_shortname}.field_id = %d AND ({$where})", $field['id'] );
 			
 			$counter++;
 		}
@@ -150,6 +161,15 @@ class BPBD {
 		return $s;
 	}	
 	
+	function filter_ajax() {
+		setcookie( 'bpbd-filters', json_encode( $_POST ) );
+	}
+
+	function filter_ajax_requests() {	
+		add_filter( 'bp_core_get_paged_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
+		add_filter( 'bp_core_get_total_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
+	}
+	
 	function filter_ui() {
 		if ( empty( $this->filterable_fields ) ) {
 			// Nothing to see here.
@@ -165,7 +185,7 @@ class BPBD {
 		
 			<ul>
 			<?php foreach ( $this->filterable_fields as $slug => $field ) : ?>
-				<li>
+				<li id="bpbd-filter-crit-<?php echo esc_attr( $field['slug'] ) ?>" class="bpbd-filter-crit bpbd-filter-crit-<?php echo esc_attr( $field['type'] ) ?>">
 					<?php $this->render_field( $field ) ?>
 				</li>
 			<?php endforeach ?>
