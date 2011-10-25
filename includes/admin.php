@@ -138,6 +138,10 @@ class BPBD_Admin {
 				$field = new BP_XProfile_Field( $field_id );
 				
 				$title = sanitize_title( $field->name );
+				
+				// MySQL needs underscores for the column aliases
+				$title = str_replace( '-', '_', $title );
+				
 				$type = isset( $_POST['field_types'][$field_id] ) ? $_POST['field_types'][$field_id] : $field->type;
 				
 				$fields[$title] = array(

@@ -93,8 +93,6 @@ class BPBD {
 		$bpbd_where = array();
 		$counter = 1;
 		
-		//var_dump( $this->get_params ); die();
-		
 		// Build the additional queries
 		foreach( $this->get_params as $field_id => $field ) {
 			$table_shortname = 'bpbd' . $counter;
@@ -177,7 +175,7 @@ class BPBD {
 	function render_field( $field ) {			
 		?>
 		
-		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['slug'] ) ?></label>
+		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['name'] ) ?></label>
 		
 		<?php
 		
