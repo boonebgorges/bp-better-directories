@@ -3,13 +3,13 @@ jQuery(document).ready(function($) {
 		$('body div#content').mask('Loading...');
 		$('div.loadmask-msg').css('top', '300px');
 		do_query();
-		
-		return false;
 	});
 	
 	$('#bpbd-filters input[type="text"]').live('keypress', function(e){
 		var ebox = this;
 		if ( e.keyCode == 13 ) {
+			e.preventDefault();
+		
 			// Move the content of the textbox to a separate div, and to the hidden input
 			var uval = $(ebox).val();
 			
@@ -21,21 +21,19 @@ jQuery(document).ready(function($) {
 			
 			// Stash in the hidden div
 			var hidden = $(ebox).siblings('.bpbd-hidden-value');
-			var curval = $(hidden).val();
-			
-			if ( !curval ) {
-				var curval = [];
+			var curval = $(hidden).val();	
+		
+			if ( '' == curval ) {
+				curval = [uval];
+			} else {				
+				curval += ',' + uval;		
 			}
-			
-			curval.push(uval);
-			
+		
 			$(hidden).val(curval);
 						
 			$('body div#content').mask('Loading...');
 			$('div.loadmask-msg').css('top', '300px');
 			do_query();
-			
-			return false;
 		}
 		
 	});
@@ -74,7 +72,10 @@ function do_query() {
 		} else if ( 'textbox' == ctype ) {
 			jQuery(critinputs).each(function(ckey,cval){
 				if ( 0 < jQuery(cval).attr('id').indexOf('filter-value-') ) {
-					critvals.push(jQuery(cval).val());
+					dval = jQuery(cval).val().split(',');
+					jQuery(dval).each(function(fkey,fval){
+						critvals.push(fval);
+					});
 				}
 			});
 		}
@@ -83,7 +84,7 @@ function do_query() {
 			args[critkey] = critvals;
 		}		
 	});
-	alert(bpbd_JSONstring.make(args));
+	
 	jQuery.bpbd_cookie('bpbd-filters', bpbd_JSONstring.make(args), { path: '/' } );
 	
 	var object = 'members';
