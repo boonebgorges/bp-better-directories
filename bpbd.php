@@ -34,8 +34,6 @@ class BPBD {
 		
 		add_action( 'wp_ajax_members_filter', array( $this, 'filter_ajax_requests' ), 1 );
 		
-		add_action( 'wp_ajax_bpbd_filter', array( $this, 'filter_ajax' ) );
-		
 		add_action( 'wp_print_styles', array( $this, 'enqueue_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
@@ -72,7 +70,7 @@ class BPBD {
 		
 		$potential_fields = isset( $_GET ) ? $_GET : array();
 		
-		$cookie_fields = (array)json_decode( stripslashes( $_COOKIE['bpbd-filters'] ) );
+		$cookie_fields = isset( $_COOKIE['bpbd-filters'] ) ? (array)json_decode( stripslashes( $_COOKIE['bpbd-filters'] ) ) : null;
 		
 		if ( isset( $_COOKIE['bpbd-filters'] ) )
 			$potential_fields = array_merge( $potential_fields, $cookie_fields );
@@ -160,12 +158,9 @@ class BPBD {
 		
 		return $s;
 	}	
-	
-	function filter_ajax() {
-		setcookie( 'bpbd-filters', json_encode( $_POST ) );
-	}
 
-	function filter_ajax_requests() {	
+	function filter_ajax_requests() {
+		header("Cache-Control: no-cache, must-revalidate");
 		add_filter( 'bp_core_get_paged_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
 		add_filter( 'bp_core_get_total_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
 	}
