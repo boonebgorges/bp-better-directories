@@ -118,14 +118,15 @@ class BPBD {
 			
 			$bpbd_from[] = $wpdb->prepare( "INNER JOIN {$bp->profile->table_name_data} {$table_shortname} ON ({$table_shortname}.user_id = u.ID)" );
 			
+			// TODO: multiple textbox values
 			// Figure out the right operators and values for the WHERE clause
-			if ( 'textbox' == $field['type'] ) {
+			if ( 'textbox' == $field['type'] && !is_array( $field['value'] ) ) {
 				// 'textbox' always gets LIKE
 				$op = "LIKE";
 				$value = $wpdb->prepare( "%s", '%%' . like_escape( $field['value'] ) . '%%' );
 				$where = $table_shortname . '.value' . $op . ' ' . $value;
 				
-			} else if ( 'multiselectbox' == $field['type'] || 'checkbox' == $field['type'] ) {
+			} else if ( 'multiselectbox' == $field['type'] || 'checkbox' == $field['type'] || ( 'textbox' == $field['type'] && is_array( $field['value'] ) ) ) {
 				// Multiselect and checkbox values may be stored as arrays, so we
 				// have to do multiple LIKEs. Hack alert
 				$clauses = array();
@@ -180,7 +181,7 @@ class BPBD {
 		
 			<ul>
 			<?php foreach ( $this->filterable_fields as $slug => $field ) : ?>
-				<li id="bpbd-filter-crit-<?php echo esc_attr( $field['slug'] ) ?>" class="bpbd-filter-crit bpbd-filter-crit-<?php echo esc_attr( $field['type'] ) ?>">
+				<li id="bpbd-filter-crit-<?php echo esc_attr( $field['slug'] ) ?>" class="bpbd-filter-crit bpbd-filter-crit-type-<?php echo esc_attr( $field['type'] ) ?>">
 					<?php $this->render_field( $field ) ?>
 				</li>
 			<?php endforeach ?>
@@ -264,6 +265,11 @@ class BPBD {
 				?>
 
 				<input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" value="<?php echo esc_html( $value ) ?>"/>
+				
+				<ul>
+				</ul>
+				
+				<input class="bpbd-hidden-value" id="bpbd-filter-value-<?php echo esc_attr( $field['slug'] ) ?>" type="hidden" name="bpbd-filter-value-<?php echo esc_attr( $field['slug'] ) ?>" />
 				
 				<?php
 				

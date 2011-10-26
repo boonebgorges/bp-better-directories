@@ -3,6 +3,41 @@ jQuery(document).ready(function($) {
 		$('body div#content').mask('Loading...');
 		$('div.loadmask-msg').css('top', '300px');
 		do_query();
+		
+		return false;
+	});
+	
+	$('#bpbd-filters input[type="text"]').live('keypress', function(e){
+		var ebox = this;
+		if ( e.keyCode == 13 ) {
+			// Move the content of the textbox to a separate div, and to the hidden input
+			var uval = $(ebox).val();
+			
+			// Create the new LI
+			$(ebox).siblings('ul').append('<li>' + uval + '</li>');
+			
+			// Delete the value from the box
+			$(ebox).val('');
+			
+			// Stash in the hidden div
+			var hidden = $(ebox).siblings('.bpbd-hidden-value');
+			var curval = $(hidden).val();
+			
+			if ( !curval ) {
+				var curval = [];
+			}
+			
+			curval.push(uval);
+			
+			$(hidden).val(curval);
+						
+			$('body div#content').mask('Loading...');
+			$('div.loadmask-msg').css('top', '300px');
+			do_query();
+			
+			return false;
+		}
+		
 	});
 	
 
@@ -22,19 +57,33 @@ function do_query() {
 		var critkey = critid.split('-').pop();
 		var critinputs = jQuery('#' + critid + ' input');
 		var critvals = [];
+		var crittype = jQuery(criterion).attr('class');
+		
+		if ( false !== crittype.indexOf('bpbd-filter-crit-type-') ) {
+			var ctype = crittype.split('bpbd-filter-crit-type-').pop(); 
+		} else {
+			var ctype = '';
+		}
 
-		jQuery(critinputs).each( function(ckey, cval){
-			/* Checkboxes */
-			if ( jQuery(cval).is(':checked') ) {
-				critvals.push(jQuery(cval).attr('value'));
-			}
-		});
+		if ( 'checkbox' == ctype ) {
+			jQuery(critinputs).each( function(ckey, cval){
+				if ( jQuery(cval).is(':checked') ) {
+					critvals.push(jQuery(cval).attr('value'));
+				}
+			});
+		} else if ( 'textbox' == ctype ) {
+			jQuery(critinputs).each(function(ckey,cval){
+				if ( 0 < jQuery(cval).attr('id').indexOf('filter-value-') ) {
+					critvals.push(jQuery(cval).val());
+				}
+			});
+		}
 		
 		if ( critvals.length >= 1 ) {
 			args[critkey] = critvals;
 		}		
 	});
-	
+	alert(bpbd_JSONstring.make(args));
 	jQuery.bpbd_cookie('bpbd-filters', bpbd_JSONstring.make(args), { path: '/' } );
 	
 	var object = 'members';
