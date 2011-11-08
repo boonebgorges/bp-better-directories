@@ -118,19 +118,11 @@ class BPBD {
 			
 			$bpbd_from[] = $wpdb->prepare( "INNER JOIN {$bp->profile->table_name_data} {$table_shortname} ON ({$table_shortname}.user_id = u.ID)" );
 			
-			// TODO: multiple textbox values
-			// Figure out the right operators and values for the WHERE clause
-			if ( 'textbox' == $field['type'] && !is_array( $field['value'] ) ) {
-				// 'textbox' always gets LIKE
-				$op = "LIKE";
-				$value = $wpdb->prepare( "%s", '%%' . like_escape( $field['value'] ) . '%%' );
-				$where = $table_shortname . '.value' . $op . ' ' . $value;
-				
-			} else if ( 'multiselectbox' == $field['type'] || 'checkbox' == $field['type'] || ( 'textbox' == $field['type'] && is_array( $field['value'] ) ) ) {
+			if ( 'textbox' == $field['type'] || 'multiselectbox' == $field['type'] || 'checkbox' == $field['type'] ) {
 				// Multiselect and checkbox values may be stored as arrays, so we
 				// have to do multiple LIKEs. Hack alert
 				$clauses = array();
-				foreach( $field['value'] as $val ) {
+				foreach( (array)$field['value'] as $val ) {
 					$clauses[] = $table_shortname . '.value LIKE "%%' . $val . '%%"';
 				}
 				$where = implode( ' OR ', $clauses );
