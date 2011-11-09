@@ -149,7 +149,7 @@ class BPBD {
 					
 			$s = join( ' ', (array)$sql );
 		}
-		echo $s;
+		
 		return $s;
 	}	
 
