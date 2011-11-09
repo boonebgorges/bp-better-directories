@@ -170,7 +170,7 @@ class BPBD {
 		<form id="bpbd-filter-form" method="get" action="<?php bp_root_domain() ?>/<?php bp_members_root_slug() ?>">
 		
 		<div id="bpbd-filters">
-			<h4><?php _e( 'Narrow Results', 'bpbd' ) ?></h4>
+			<h4><?php _e( 'Narrow Results', 'bpbd' ) ?> <span id="bpbd-clear-all"><a href="#">Clear All</a></span></h4>
 		
 			<ul>
 			<?php foreach ( $this->filterable_fields as $slug => $field ) : ?>
@@ -190,7 +190,7 @@ class BPBD {
 	function render_field( $field ) {			
 		?>
 		
-		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['name'] ) ?></label>
+		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['name'] ) ?> <span class="bpbd-clear-this"><a href="#">Clear</a></span></label>
 		
 		<?php
 		
@@ -259,9 +259,10 @@ class BPBD {
 
 				<input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" value=""/>
 				
-				<ul>
+				<ul class="bpbd-search-terms">
 				<?php if ( is_array( $value ) && !empty( $value ) ) : ?>		
 					<?php foreach ( (array)$value as $sterm ) : ?>
+						<?php if ( !trim( $sterm ) ) continue; ?>
 						<li id="bpbd-value-<?php echo sanitize_title( $sterm ) ?>"><span class="bpbd-remove"><a href="#">x</a></span> <?php echo esc_html( $sterm ) ?></li>
 					<?php endforeach ?>	
 				<?php endif ?>				
