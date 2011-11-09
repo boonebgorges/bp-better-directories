@@ -255,6 +255,7 @@ class BPBD {
 				<?php
 				break;
 			case 'textbox' :
+			default :
 				?>
 
 				<input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" value=""/>

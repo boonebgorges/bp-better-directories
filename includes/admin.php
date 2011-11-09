@@ -112,9 +112,9 @@ class BPBD_Admin {
 			
 			default :
 				$types = array(
-					'radio' 	 => __( 'Radio buttons', 'bpbd' ),
-					'selectbox' 	 => __( 'Dropdown', 'bpbd' ),
-					'multiselectbox' => __( 'Multiple select box', 'bpbd' ),
+					//'radio' 	 => __( 'Radio buttons', 'bpbd' ),
+					//'selectbox' 	 => __( 'Dropdown', 'bpbd' ),
+					//'multiselectbox' => __( 'Multiple select box', 'bpbd' ),
 					'checkbox'       => __( 'Checkboxes', 'bpbd' ),
 					'textbox'	 => __( 'Text search', 'bpbd' )
 				);
@@ -143,6 +143,9 @@ class BPBD_Admin {
 				$title = str_replace( '-', '_', $title );
 				
 				$type = isset( $_POST['field_types'][$field_id] ) ? $_POST['field_types'][$field_id] : $field->type;
+				
+				if ( !$type )
+					$type = 'textbox';
 				
 				$fields[$title] = array(
 					'id'	=> $field_id,
