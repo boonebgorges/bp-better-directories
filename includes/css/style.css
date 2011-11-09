@@ -8,6 +8,24 @@
 
 #bpbd-filters label {
 	display: block;
+	font-style: italic;
+}
+
+li.bpbd-filter-crit {
+	margin: 2em 0;
+}
+
+ul.bpbd-search-terms {
+	
+}
+
+ul.bpbd-search-terms li {
+	border-radius: 3px;
+	background: #eee;
+	border: 1px solid #ddd;
+	display: inline-block;
+	padding: 1px 10px;
+	margin: 4px 0;
 }
 
 

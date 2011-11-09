@@ -259,7 +259,7 @@ class BPBD {
 
 				<input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" value=""/>
 				
-				<ul>
+				<ul class="bpbd-search-terms">
 				<?php if ( is_array( $value ) && !empty( $value ) ) : ?>		
 					<?php foreach ( (array)$value as $sterm ) : ?>
 						<li id="bpbd-value-<?php echo sanitize_title( $sterm ) ?>"><span class="bpbd-remove"><a href="#">x</a></span> <?php echo esc_html( $sterm ) ?></li>
