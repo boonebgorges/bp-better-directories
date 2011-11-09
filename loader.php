@@ -3,14 +3,14 @@
 Plugin Name: BP Better Directories
 Plugin URI: http://github.com/boonebgorges/bp-better-directories
 Description: Adds sophisticated search and filters to your BuddyPress member directory
-Version: 1.0
+Version: 0.9.1
 Author: Boone B Gorges
 Author URI: http://boonebgorges.com
 Licence: GPLv3
 Network: true
 */
 
-define( 'BPBD_VERSION', '1.0' );
+define( 'BPBD_VERSION', '0.9.1' );
 
 /**
  * Loads BP Better Directories files only if BuddyPress is present

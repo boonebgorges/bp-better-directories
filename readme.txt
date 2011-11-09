@@ -4,7 +4,7 @@ Tags: buddypress, members, directory, ajax, filter, search
 Requires at least: WP 3.2, BuddyPress 1.5
 Tested up to: WP 3.2.1, BuddyPress 1.5.1
 Donate link: http://teleogistic.net/donate/
-Stable tag: 0.9
+Stable tag: 0.9.1
 
 Fancy schmancy BuddyPress member directories.
 
