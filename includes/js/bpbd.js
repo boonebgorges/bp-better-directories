@@ -42,7 +42,29 @@ jQuery(document).ready(function($) {
 		
 	});
 	
+	/* Removal 'x' on search terms */
 	$('.bpbd-remove a').bind( 'click', function() { bpbd_remove_item(this); return false; } );
+	
+	/* 'Clear' links on individual criteria */
+	$('.bpbd-clear-this a').bind('click', function() { bpbd_remove_this_crit(this,true); return false; } );
+	
+	/* 'Clear All' link for resetting all criteria */
+	$('#bpbd-clear-all a').bind('click', function() {
+		$('body div#content').mask('Loading...');
+		$('div.loadmask-msg').css('top', '300px');
+		
+		$.each($('.bpbd-filter-crit'), function(k,v){
+			var clearthis = $(v).find('.bpbd-clear-this a');
+			bpbd_remove_this_crit(clearthis, false); 
+		});
+		
+		/* Refresh */
+		var object = 'members';
+		bpbd_bp_filter_request( object, $.cookie('bp-' + object + '-filter'), $.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, $.cookie('bp-' + object + '-extras') );
+					
+		return false; 
+	});
+	
 },(jQuery));
 
 var jq = jQuery;
@@ -137,6 +159,47 @@ function bpbd_remove_item( item ){
 	bpbd_bp_filter_request( object, jq.cookie('bp-' + object + '-filter'), jq.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, jq.cookie('bp-' + object + '-extras') );
 	
 	return false;				
+}
+
+function bpbd_remove_this_crit( item, dorefresh ) {
+	var j = jQuery;
+	
+	if ( dorefresh ) {
+		j('body div#content').mask('Loading...');
+		j('div.loadmask-msg').css('top', '300px');
+	}
+	
+	var paritem = j(item).parents('.bpbd-filter-crit');
+	var thecookie = bpbd_JSONstring.toObject(j.cookie('bpbd-filters'));
+	
+	if(j(paritem).hasClass('bpbd-filter-crit-type-checkbox')){		
+		/* Uncheck the items */
+		j.each(j(paritem).find('li input[type="checkbox"]'), function(index,value){
+			if(j(value).is(':checked')){
+				j(value).attr('checked',false);
+			}
+		});
+	} else {
+		/* Textboxes */
+		/* Clear the hidden value */
+		j(paritem).find('.bpbd-hidden-value').val('');
+		
+		/* Clear markup */
+		j(paritem).find('ul.bpbd-search-terms').html('');
+	}
+		
+	/* Clear the cookie */
+	var cookiekey = j(paritem).attr('id').split('bpbd-filter-crit-').pop();
+	delete thecookie[cookiekey];
+	j.bpbd_cookie('bpbd-filters', bpbd_JSONstring.make(thecookie), { path: '/' } );
+	
+	if ( dorefresh ) {
+		/* Refresh */
+		var object = 'members';
+		bpbd_bp_filter_request( object, jq.cookie('bp-' + object + '-filter'), jq.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, jq.cookie('bp-' + object + '-extras') );
+	}
+	
+	return false;
 }
 
 function bpbd_bp_filter_request( object, filter, scope, target, search_terms, page, extras ) {

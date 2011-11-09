@@ -4,6 +4,7 @@
 	width: 300px;
 	float: left;
 	overflow: hidden;
+	padding-right: 20px;
 }
 
 #bpbd-filters label {
@@ -15,10 +16,6 @@ li.bpbd-filter-crit {
 	margin: 2em 0;
 }
 
-ul.bpbd-search-terms {
-	
-}
-
 ul.bpbd-search-terms li {
 	border-radius: 3px;
 	background: #eee;
@@ -26,6 +23,16 @@ ul.bpbd-search-terms li {
 	display: inline-block;
 	padding: 1px 10px;
 	margin: 4px 0;
+}
+
+.bpbd-clear-this, #bpbd-clear-all {
+	float: right;
+	font-size: .9em;
+	font-style: normal;
+}
+
+#bpbd-clear-all {
+	font-size: .75em;
 }
 
 
