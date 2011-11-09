@@ -2,7 +2,7 @@ jQuery(document).ready(function($) {
 	$('#bpbd-filters input[type="checkbox"]').live('click', function(value){
 		$('body div#content').mask('Loading...');
 		$('div.loadmask-msg').css('top', '300px');
-		do_query();
+		bpbd_do_query();
 	});
 	
 	$('#bpbd-filters input[type="text"]').live('keypress', function(e){
@@ -12,9 +12,13 @@ jQuery(document).ready(function($) {
 		
 			// Move the content of the textbox to a separate div, and to the hidden input
 			var uval = $(ebox).val();
+			var uvalclean = uval.replace(' ','_');
 			
 			// Create the new LI
-			$(ebox).siblings('ul').append('<li>' + uval + '</li>');
+			$(ebox).siblings('ul').append('<li id="bpbd-value-' + uvalclean + '"><span class="bpbd-remove"><a href="#">x</a></span> ' + uval + '</li>');
+			
+			// Bind the remove action to the 'x'
+			$('#bpbd-value-' + uvalclean + ' span.bpbd-remove a').bind( 'click', function() { bpbd_remove_item(this); return false; } );
 			
 			// Delete the value from the box
 			$(ebox).val('');
@@ -33,17 +37,17 @@ jQuery(document).ready(function($) {
 						
 			$('body div#content').mask('Loading...');
 			$('div.loadmask-msg').css('top', '300px');
-			do_query();
+			bpbd_do_query();
 		}
 		
 	});
 	
-
+	$('.bpbd-remove a').bind( 'click', function() { bpbd_remove_item(this); return false; } );
 },(jQuery));
 
 var jq = jQuery;
 
-function do_query() {
+function bpbd_do_query() {
 	// Get all the criteria
 	var c = jQuery('#bpbd-filters li.bpbd-filter-crit');
 	
@@ -89,6 +93,50 @@ function do_query() {
 	
 	var object = 'members';
 	bpbd_bp_filter_request( object, jq.cookie('bp-' + object + '-filter'), jq.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, jq.cookie('bp-' + object + '-extras') );
+}
+
+function bpbd_remove_item( item ){
+	var j = jQuery;
+	
+	j('body div#content').mask('Loading...');
+	j('div.loadmask-msg').css('top', '300px');
+	
+	var searchterm = j(item).parent().parent().attr('id').split('bpbd-value-').pop();
+	
+	/* Remove from search terms list */
+	var parli = j(item).parents('.bpbd-filter-crit').attr('id');
+	var hidd = j('#' + parli + ' .bpbd-hidden-value');
+	var hidval = j(hidd).val().split(',');
+
+	j.each(hidval,function(index, value){
+		if ( searchterm == value ) {
+			hidval.splice(index,1);
+		}
+	});
+	
+	j(hidd).val(hidval);
+	
+	/* Now to remove from the cookie */
+	var thekey = (parli).split('bpbd-filter-crit-').pop();
+	var thecookie = bpbd_JSONstring.toObject(j.cookie('bpbd-filters'));
+	var curvals = thecookie[thekey];
+
+	j(curvals).each(function(index, value){
+		if ( searchterm == value ) {
+			curvals.splice(index,1);
+		}
+	});
+	thecookie[thekey] = curvals;
+	j.bpbd_cookie('bpbd-filters', bpbd_JSONstring.make(thecookie), { path: '/' } );
+	
+	/* Remove the list item itself */
+	j(item).parent().parent().remove();
+	
+	/* Refresh */
+	var object = 'members';
+	bpbd_bp_filter_request( object, jq.cookie('bp-' + object + '-filter'), jq.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, jq.cookie('bp-' + object + '-extras') );
+	
+	return false;				
 }
 
 function bpbd_bp_filter_request( object, filter, scope, target, search_terms, page, extras ) {

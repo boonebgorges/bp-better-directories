@@ -77,6 +77,7 @@ class BPBD {
 		
 		foreach ( (array)$filterable_keys as $filterable_key ) {
 			if ( !empty( $potential_fields[$filterable_key] ) ) {
+		
 				// Get the field id for keying the array
 				$field_id = $filterable_fields[$filterable_key]['id'];
 				
@@ -148,7 +149,7 @@ class BPBD {
 					
 			$s = join( ' ', (array)$sql );
 		}
-		
+		echo $s;
 		return $s;
 	}	
 
@@ -256,12 +257,18 @@ class BPBD {
 			case 'textbox' :
 				?>
 
-				<input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" value="<?php echo esc_html( $value ) ?>"/>
+				<input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" value=""/>
 				
 				<ul>
+				<?php if ( is_array( $value ) && !empty( $value ) ) : ?>		
+					<?php foreach ( (array)$value as $sterm ) : ?>
+						<li id="bpbd-value-<?php echo sanitize_title( $sterm ) ?>"><span class="bpbd-remove"><a href="#">x</a></span> <?php echo esc_html( $sterm ) ?></li>
+					<?php endforeach ?>	
+				<?php endif ?>				
 				</ul>
 				
-				<input class="bpbd-hidden-value" id="bpbd-filter-value-<?php echo esc_attr( $field['slug'] ) ?>" type="hidden" name="bpbd-filter-value-<?php echo esc_attr( $field['slug'] ) ?>" />
+				<?php /* Comma-separated string */ ?>
+				<input class="bpbd-hidden-value" id="bpbd-filter-value-<?php echo esc_attr( $field['slug'] ) ?>" type="hidden" name="bpbd-filter-value-<?php echo esc_attr( $field['slug'] ) ?>" value="<?php echo esc_attr( implode( ',', (array)$value ) ) ?>" />
 				
 				<?php
 				
