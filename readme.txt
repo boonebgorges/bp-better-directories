@@ -17,5 +17,8 @@ WARNING! This plugin is not ready to be used on a production site!
 
 == Changelog ==
 
+= 0.9.1 =
+* Adds links for clearing criteria
+
 = 0.9 =
 * Initial beta releas
