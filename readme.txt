@@ -17,6 +17,9 @@ WARNING! This plugin is not ready to be used on a production site!
 
 == Changelog ==
 
+= 0.9.3 =
+* Don't show Submit button when JS is enabled
+
 = 0.9.2 =
 * Fixes a few admin bugs
 

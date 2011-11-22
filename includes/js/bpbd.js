@@ -42,6 +42,9 @@ jQuery(document).ready(function($) {
 		
 	});
 	
+	/* Don't show the Submit button when JS is enabled */
+	$('#bpbd-filters input[type="submit"]').remove();
+	
 	/* Removal 'x' on search terms */
 	$('.bpbd-remove a').bind( 'click', function() { bpbd_remove_item(this); return false; } );
 	
