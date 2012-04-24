@@ -16,6 +16,10 @@ li.bpbd-filter-crit {
 	margin: 2em 0;
 }
 
+li.bpbd-filter-crit ul li ul li {
+	margin-left: 30px;
+}
+
 ul.bpbd-search-terms li {
 	border-radius: 3px;
 	background: #eee;
@@ -39,7 +43,7 @@ ul.bpbd-search-terms li {
 
 
 /* BP-DEFAULT OVERRIDES */
-body.members.directory #subnav, 
+body.members.directory #subnav,
 body.members.directory #members-dir-list {
 	padding-left: 325px;
 }

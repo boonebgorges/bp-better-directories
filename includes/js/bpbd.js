@@ -4,90 +4,86 @@ jQuery(document).ready(function($) {
 		$('div.loadmask-msg').css('top', '300px');
 		bpbd_do_query();
 	});
-	
+
 	$('#bpbd-filters input[type="text"]').live('keypress', function(e){
 		var ebox = this;
 		if ( e.keyCode == 13 ) {
 			e.preventDefault();
-		
+
 			// Move the content of the textbox to a separate div, and to the hidden input
 			var uval = $(ebox).val();
 			var uvalclean = uval.replace(' ','_');
-			
+
 			// Create the new LI
 			$(ebox).siblings('ul').append('<li id="bpbd-value-' + uvalclean + '"><span class="bpbd-remove"><a href="#">x</a></span> ' + uval + '</li>');
-			
+
 			// Bind the remove action to the 'x'
 			$('#bpbd-value-' + uvalclean + ' span.bpbd-remove a').bind( 'click', function() { bpbd_remove_item(this); return false; } );
-			
+
 			// Delete the value from the box
 			$(ebox).val('');
-			
+
 			// Stash in the hidden div
 			var hidden = $(ebox).siblings('.bpbd-hidden-value');
-			var curval = $(hidden).val();	
-		
+			var curval = $(hidden).val();
+
 			if ( '' == curval ) {
 				curval = [uval];
-			} else {				
-				curval += ',' + uval;		
+			} else {
+				curval += ',' + uval;
 			}
-		
+
 			$(hidden).val(curval);
-						
+
 			$('body div#content').mask('Loading...');
 			$('div.loadmask-msg').css('top', '300px');
 			bpbd_do_query();
 		}
-		
+
 	});
-	
+
 	/* Removal 'x' on search terms */
 	$('.bpbd-remove a').bind( 'click', function() { bpbd_remove_item(this); return false; } );
-	
+
 	/* 'Clear' links on individual criteria */
 	$('.bpbd-clear-this a').bind('click', function() { bpbd_remove_this_crit(this,true); return false; } );
-	
+
 	/* 'Clear All' link for resetting all criteria */
 	$('#bpbd-clear-all a').bind('click', function() {
 		$('body div#content').mask('Loading...');
 		$('div.loadmask-msg').css('top', '300px');
-		
+
 		$.each($('.bpbd-filter-crit'), function(k,v){
 			var clearthis = $(v).find('.bpbd-clear-this a');
-			bpbd_remove_this_crit(clearthis, false); 
+			bpbd_remove_this_crit(clearthis, false);
 		});
-		
+
 		/* Refresh */
 		var object = 'members';
 		bpbd_bp_filter_request( object, $.cookie('bp-' + object + '-filter'), $.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, $.cookie('bp-' + object + '-extras') );
-					
-		return false; 
+
+		return false;
 	});
-	
+
 },(jQuery));
 
 var jq = jQuery;
 
 function bpbd_do_query() {
 	// Get all the criteria
-	var c = jQuery('#bpbd-filters li.bpbd-filter-crit');
-	
+	var c = jQuery('#bpbd-filters li.bpbd-filter-crit ul.bpbd-filter-option');
+
 	var args = {};
 
 	// Look through the criteria
 	jQuery(c).each(function(key,criterion){
 		var critid = jQuery(criterion).attr('id');
 		var critkey = critid.split('-').pop();
-		var critinputs = jQuery('#' + critid + ' input');
+		var critinputs = jQuery('input[name='+critkey+']');
 		var critvals = [];
-		var crittype = jQuery(criterion).attr('class');
-		
-		if ( false !== crittype.indexOf('bpbd-filter-crit-type-') ) {
-			var ctype = crittype.split('bpbd-filter-crit-type-').pop(); 
-		} else {
-			var ctype = '';
-		}
+
+		var firstchild = jQuery(criterion).find('li:first-child input');
+		var ctype = jQuery(firstchild).attr('type');
 
 		if ( 'checkbox' == ctype ) {
 			jQuery(critinputs).each( function(ckey, cval){
@@ -105,26 +101,26 @@ function bpbd_do_query() {
 				}
 			});
 		}
-		
+
 		if ( critvals.length >= 1 ) {
 			args[critkey] = critvals;
-		}		
+		}
 	});
-	
+
 	jQuery.bpbd_cookie('bpbd-filters', bpbd_JSONstring.make(args), { path: '/' } );
-	
+
 	var object = 'members';
 	bpbd_bp_filter_request( object, jq.cookie('bp-' + object + '-filter'), jq.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, jq.cookie('bp-' + object + '-extras') );
 }
 
 function bpbd_remove_item( item ){
 	var j = jQuery;
-	
+
 	j('body div#content').mask('Loading...');
 	j('div.loadmask-msg').css('top', '300px');
-	
+
 	var searchterm = j(item).parent().parent().attr('id').split('bpbd-value-').pop();
-	
+
 	/* Remove from search terms list */
 	var parli = j(item).parents('.bpbd-filter-crit').attr('id');
 	var hidd = j('#' + parli + ' .bpbd-hidden-value');
@@ -135,9 +131,9 @@ function bpbd_remove_item( item ){
 			hidval.splice(index,1);
 		}
 	});
-	
+
 	j(hidd).val(hidval);
-	
+
 	/* Now to remove from the cookie */
 	var thekey = (parli).split('bpbd-filter-crit-').pop();
 	var thecookie = bpbd_JSONstring.toObject(j.cookie('bpbd-filters'));
@@ -150,29 +146,29 @@ function bpbd_remove_item( item ){
 	});
 	thecookie[thekey] = curvals;
 	j.bpbd_cookie('bpbd-filters', bpbd_JSONstring.make(thecookie), { path: '/' } );
-	
+
 	/* Remove the list item itself */
 	j(item).parent().parent().remove();
-	
+
 	/* Refresh */
 	var object = 'members';
 	bpbd_bp_filter_request( object, jq.cookie('bp-' + object + '-filter'), jq.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, jq.cookie('bp-' + object + '-extras') );
-	
-	return false;				
+
+	return false;
 }
 
 function bpbd_remove_this_crit( item, dorefresh ) {
 	var j = jQuery;
-	
+
 	if ( dorefresh ) {
 		j('body div#content').mask('Loading...');
 		j('div.loadmask-msg').css('top', '300px');
 	}
-	
+
 	var paritem = j(item).parents('.bpbd-filter-crit');
 	var thecookie = bpbd_JSONstring.toObject(j.cookie('bpbd-filters'));
-	
-	if(j(paritem).hasClass('bpbd-filter-crit-type-checkbox')){		
+
+	if(j(paritem).hasClass('bpbd-filter-crit-type-checkbox')){
 		/* Uncheck the items */
 		j.each(j(paritem).find('li input[type="checkbox"]'), function(index,value){
 			if(j(value).is(':checked')){
@@ -183,22 +179,22 @@ function bpbd_remove_this_crit( item, dorefresh ) {
 		/* Textboxes */
 		/* Clear the hidden value */
 		j(paritem).find('.bpbd-hidden-value').val('');
-		
+
 		/* Clear markup */
 		j(paritem).find('ul.bpbd-search-terms').html('');
 	}
-		
+
 	/* Clear the cookie */
 	var cookiekey = j(paritem).attr('id').split('bpbd-filter-crit-').pop();
 	delete thecookie[cookiekey];
 	j.bpbd_cookie('bpbd-filters', bpbd_JSONstring.make(thecookie), { path: '/' } );
-	
+
 	if ( dorefresh ) {
 		/* Refresh */
 		var object = 'members';
 		bpbd_bp_filter_request( object, jq.cookie('bp-' + object + '-filter'), jq.cookie('bp-' + object + '-scope'), 'div.' + object, '', 1, jq.cookie('bp-' + object + '-extras') );
 	}
-	
+
 	return false;
 }
 
@@ -247,7 +243,7 @@ function bpbd_bp_filter_request( object, filter, scope, target, search_terms, pa
 			jq(this).html(response);
 			jq(this).fadeIn(100);
 	 	});
-		
+
 		jq('body div#content').unmask();
 	});
 }
@@ -319,8 +315,8 @@ Andrea Giammarchi 2007
 */
 
 bpbd_JSONstring={
-	compactOutput:false, 		
-	includeProtos:false, 	
+	compactOutput:false,
+	includeProtos:false,
 	includeFunctions: false,
 	detectCirculars:true,
 	restoreCirculars:true,
@@ -385,11 +381,11 @@ bpbd_JSONstring={
 					for (var i in arg) {
 						if(!this.includeProtos && arg[i]===arg.constructor.prototype[i]){continue};
 						this.path.push(i);
-						var curr = out.length; 
+						var curr = out.length;
 						if (!first)
 							out.push(this.compactOutput?',':',\n');
 						this.toJsonStringArray(i, out);
-						out.push(':');                    
+						out.push(':');
 						this.toJsonStringArray(arg[i], out);
 						if (out[out.length - 1] == u)
 							out.splice(curr, out.length - curr);
@@ -410,7 +406,7 @@ bpbd_JSONstring={
 			if(!this.includeFunctions){out.push(u);return out};
 			arg="JSONincludedFunc:"+arg;
 			out.push('"');
-			var a=['\\','\\\\','\n','\\n','\r','\\r','"','\\"'];arg+=""; 
+			var a=['\\','\\\\','\n','\\n','\r','\\r','"','\\"'];arg+="";
 			for(var i=0;i<8;i+=2){arg=arg.split(a[i]).join(a[i+1])};
 			out.push(arg);
 			out.push('"');
