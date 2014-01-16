@@ -93,32 +93,32 @@ class BPBD {
 				} else {
 					$values = urldecode( $potential_fields[$filterable_key] );
 				}
-				
+
 				$this->get_params[$field_id]['value'] = $values;
 			}
 		}
-		
+
 		// Todo: sort order?
 	}
-	
+
 	function users_sql_filter( $s, $sql ) {
 		global $bp, $wpdb;
-		
+
 		$bpbd_select = array();
 		$bpbd_from = array();
 		$bpbd_where = array();
 		$counter = 1;
-		
+
 		// Build the additional queries
 		foreach( $this->get_params as $field_id => $field ) {
 			$table_shortname = 'bpbd' . $counter;
-		
+
 			// Since we're already doing the join, let's bring the extra content into
 			// the template. This'll be unset in the total_users filter
-			$bpbd_select[] = $wpdb->prepare( ", {$table_shortname}.value as {$field['slug']}" );
-			
-			$bpbd_from[] = $wpdb->prepare( "INNER JOIN {$bp->profile->table_name_data} {$table_shortname} ON ({$table_shortname}.user_id = u.ID)" );
-			
+			$bpbd_select[] = ", {$table_shortname}.value as {$field['slug']}";
+
+			$bpbd_from[] = "INNER JOIN {$bp->profile->table_name_data} {$table_shortname} ON ({$table_shortname}.user_id = u.ID)";
+
 			if ( 'textbox' == $field['type'] || 'multiselectbox' == $field['type'] || 'checkbox' == $field['type'] ) {
 				// Multiselect and checkbox values may be stored as arrays, so we
 				// have to do multiple LIKEs. Hack alert
