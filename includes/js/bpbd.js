@@ -42,6 +42,9 @@ jQuery(document).ready(function($) {
 		
 	});
 	
+	/* Don't show the Submit button when JS is enabled */
+	$('#bpbd-filters input[type="submit"]').remove();
+	
 	/* Removal 'x' on search terms */
 	$('.bpbd-remove a').bind( 'click', function() { bpbd_remove_item(this); return false; } );
 	
@@ -172,6 +175,10 @@ function bpbd_remove_this_crit( item, dorefresh ) {
 	var paritem = j(item).parents('.bpbd-filter-crit');
 	var thecookie = bpbd_JSONstring.toObject(j.cookie('bpbd-filters'));
 	
+	if ( null == thecookie ) {
+		thecookie = new Object();
+	}
+	
 	if(j(paritem).hasClass('bpbd-filter-crit-type-checkbox')){		
 		/* Uncheck the items */
 		j.each(j(paritem).find('li input[type="checkbox"]'), function(index,value){
@@ -190,7 +197,9 @@ function bpbd_remove_this_crit( item, dorefresh ) {
 		
 	/* Clear the cookie */
 	var cookiekey = j(paritem).attr('id').split('bpbd-filter-crit-').pop();
-	delete thecookie[cookiekey];
+	if ( cookiekey in thecookie ) {
+		delete thecookie[cookiekey];
+	}
 	j.bpbd_cookie('bpbd-filters', bpbd_JSONstring.make(thecookie), { path: '/' } );
 	
 	if ( dorefresh ) {
