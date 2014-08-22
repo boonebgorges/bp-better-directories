@@ -282,8 +282,4 @@ class BPBD {
 			wp_enqueue_script( 'bpbd-js', BPBD_INSTALL_URL . '/includes/js/bpbd.js', array( 'jquery', 'dtheme-ajax-js', 'jquery-loadmask' ) );
 		}
 	}
-
-
 }
-
-?>
