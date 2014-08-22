@@ -54,6 +54,7 @@ class BPBD {
 		// Set so it can be used object-wide
 		$this->filterable_fields = $filterable_fields;
 
+		$filterable_keys = array();
 		if ( is_array( $filterable_fields ) ) {
 			$filterable_keys = array_keys( $filterable_fields );
 		}
