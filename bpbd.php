@@ -5,16 +5,6 @@ class BPBD {
 	var $filterable_fields = array();
 
 	/**
-	 * PHP 4 constructor
-	 *
-	 * @package BP Better Directories
-	 * @since 1.0
-	 */
-	function bpbd() {
-		$this->__construct();
-	}
-
-	/**
 	 * PHP 5 constructor
 	 *
 	 * @package BP Better Directories
