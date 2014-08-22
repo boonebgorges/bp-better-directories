@@ -1,8 +1,8 @@
 <?php
 
 class BPBD {
-	var $get_params = array();
-	var $filterable_fields = array();
+	public $get_params = array();
+	public $filterable_fields = array();
 
 	/**
 	 * PHP 5 constructor
@@ -10,7 +10,7 @@ class BPBD {
 	 * @package BP Better Directories
 	 * @since 1.0
 	 */
-	function __construct() {
+	public function __construct() {
 		define( 'BPBD_INSTALL_DIR', trailingslashit( dirname(__FILE__) ) );
 		define( 'BPBD_INSTALL_URL', plugins_url() . '/bp-better-directories/' );
 
@@ -28,7 +28,7 @@ class BPBD {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 
-	function setup() {
+	public function setup() {
 		global $bp;
 
 		// Temporary backpat for 1.2
@@ -48,7 +48,7 @@ class BPBD {
 		}
 	}
 
-	function setup_get_params() {
+	public function setup_get_params() {
 		$filterable_fields = get_blog_option( BP_ROOT_BLOG, 'bpdb_fields' );
 
 		// Set so it can be used object-wide
@@ -92,7 +92,7 @@ class BPBD {
 		// Todo: sort order?
 	}
 
-	function users_sql_filter( $s, $sql ) {
+	public function users_sql_filter( $s, $sql ) {
 		global $bp, $wpdb;
 
 		$bpbd_select = array();
@@ -144,13 +144,13 @@ class BPBD {
 		return $s;
 	}
 
-	function filter_ajax_requests() {
+	public function filter_ajax_requests() {
 		header("Cache-Control: no-cache, must-revalidate");
 		add_filter( 'bp_core_get_paged_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
 		add_filter( 'bp_core_get_total_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
 	}
 
-	function filter_ui() {
+	public function filter_ui() {
 		if ( empty( $this->filterable_fields ) ) {
 			// Nothing to see here.
 			return;
@@ -178,7 +178,7 @@ class BPBD {
 		<?php
 	}
 
-	function render_field( $field ) {
+	public function render_field( $field ) {
 		?>
 
 		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['name'] ) ?> <span class="bpbd-clear-this"><a href="#">Clear</a></span></label>
@@ -269,14 +269,14 @@ class BPBD {
 		}
 	}
 
-	function enqueue_styles() {
+	public function enqueue_styles() {
 		if ( bp_is_directory() && bp_is_members_component() ) {
 			wp_enqueue_style( 'jquery-loadmask-css', BPBD_INSTALL_URL . '/includes/lib/jquery.loadmask/jquery.loadmask.css' );
 			wp_enqueue_style( 'bpbd-css', BPBD_INSTALL_URL . '/includes/css/style.css' );
 		}
 	}
 
-	function enqueue_scripts() {
+	public function enqueue_scripts() {
 		if ( bp_is_directory() && bp_is_members_component() ) {
 			wp_enqueue_script( 'jquery-loadmask', BPBD_INSTALL_URL . '/includes/lib/jquery.loadmask/jquery.loadmask.min.js', array( 'jquery' ) );
 			wp_enqueue_script( 'bpbd-js', BPBD_INSTALL_URL . '/includes/js/bpbd.js', array( 'jquery', 'dtheme-ajax-js', 'jquery-loadmask' ) );
