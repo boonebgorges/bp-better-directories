@@ -18,6 +18,8 @@ class BPBD {
 			require( BPBD_INSTALL_DIR . 'includes/1.5-abstraction.php' );
 		}
 
+		require( BPBD_INSTALL_DIR . 'includes/class-bpbd-query.php' );
+
 		$this->setup_get_params();
 
 		add_action( 'init', array( $this, 'setup' ) );
