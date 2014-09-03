@@ -24,6 +24,8 @@ class BPBD {
 
 		add_action( 'init', array( $this, 'setup' ) );
 
+		add_action( 'bp_actions', array( $this, 'catch_post_request' ) );
+
 		add_action( 'wp_ajax_members_filter', array( $this, 'filter_ajax_requests' ), 1 );
 
 		add_action( 'wp_print_styles', array( $this, 'enqueue_styles' ) );
@@ -41,12 +43,39 @@ class BPBD {
 		}
 
 		if ( $is_members && !bp_is_single_item() ) {
-			// Add the sql filters
-			add_filter( 'bp_core_get_paged_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
-			add_filter( 'bp_core_get_total_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
+			// Filter the user query
+			add_filter( 'bp_pre_user_query_construct', array( $this, 'filter_user_query' ) );
 
 			// Add the filter UI
 			add_action( 'bp_before_directory_members', array( $this, 'filter_ui' ) );
+		}
+	}
+
+	/**
+	 * We catch search requests in the POST, convert to a URL with GET params, and redirect.
+	 *
+	 * This allows for cleaner URLs.
+	 */
+	public function catch_post_request() {
+		if ( ! empty( $_POST['bpbd-submit'] ) ) {
+			$redirect = bp_get_requested_url();
+
+			foreach ( $_POST as $pkey => $pvalue ) {
+				if ( 0 !== strpos( $pkey, 'bpbd-filter-' ) ) {
+					continue;
+				}
+
+				if ( is_array( $pvalue ) ) {
+					foreach ( $pvalue as $pv ) {
+						$redirect = add_query_arg( $pkey . '[]', $pv );
+					}
+				} else {
+					$redirect = add_query_arg( $pkey, $pvalue );
+				}
+			}
+
+			bp_core_redirect( $redirect );
+			die();
 		}
 	}
 
