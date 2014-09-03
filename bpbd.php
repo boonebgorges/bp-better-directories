@@ -18,7 +18,9 @@ class BPBD {
 			require( BPBD_INSTALL_DIR . 'includes/1.5-abstraction.php' );
 		}
 
-		require( BPBD_INSTALL_DIR . 'includes/class-bpbd-query.php' );
+		if ( ! class_exists( 'BP_XProfile_Query' ) ) {
+			require( BPBD_INSTALL_DIR . 'includes/class-bp-xprofile-query.php' );
+		}
 
 		$this->setup_get_params();
 
@@ -123,56 +125,40 @@ class BPBD {
 		// Todo: sort order?
 	}
 
-	public function users_sql_filter( $s, $sql ) {
-		global $bp, $wpdb;
+	public function filter_user_query( BP_User_Query $user_query ) {
+		$xprofile_query = array();
+		if ( isset( $user_query->query_vars['xprofile_query'] ) ) {
+			$xprofile_query = (array) $user_query->query_vars['xprofile_query'];
+		}
 
-		$bpbd_select = array();
-		$bpbd_from = array();
-		$bpbd_where = array();
-		$counter = 1;
+		foreach ( $this->get_params as $field_id => $field ) {
+			switch ( $field['type'] ) {
+				case 'textbox' :
+					$xprofile_query[] = array(
+						'field_id' => $field_id,
+						'value' => $field['value'],
+						'compare' => 'LIKE',
+					);
 
-		// Build the additional queries
-		foreach( $this->get_params as $field_id => $field ) {
-			$table_shortname = 'bpbd' . $counter;
+					break;
 
-			// Since we're already doing the join, let's bring the extra content into
-			// the template. This'll be unset in the total_users filter
-			$bpbd_select[] = ", {$table_shortname}.value as {$field['slug']}";
-
-			$bpbd_from[] = "INNER JOIN {$bp->profile->table_name_data} {$table_shortname} ON ({$table_shortname}.user_id = u.ID)";
-
-			if ( 'textbox' == $field['type'] || 'multiselectbox' == $field['type'] || 'checkbox' == $field['type'] ) {
-				// Multiselect and checkbox values may be stored as arrays, so we
-				// have to do multiple LIKEs. Hack alert
-				$clauses = array();
-				foreach( (array)$field['value'] as $val ) {
-					$clauses[] = $table_shortname . '.value LIKE "%%' . $val . '%%"';
-				}
-				$where = implode( ' OR ', $clauses );
-			} else {
-				// Everything else is an exact match
-				$op = '=';
-				$value = $wpdb->prepare( "%s", $field['value'] );
-				$where = $table_shortname . '.value' . $op . ' ' . $value;
+				// This data is stored serialized so we do
+				// multiple LIKE clauses
+				case 'checkbox' :
+					foreach ( (array) $field['value'] as $v ) {
+						$xprofile_query[] = array(
+							'field_id' => $field_id,
+							'value' => $v,
+							'compare' => 'LIKE',
+						);
+					}
+					break;
 			}
-
-			$bpbd_where[] = $wpdb->prepare( "AND {$table_shortname}.field_id = %d AND ({$where})", $field['id'] );
-
-			$counter++;
 		}
 
-		if ( !empty( $bpbd_from ) && !empty( $bpbd_where ) ) {
-			// The total_sql query won't have this index
-			if ( isset( $sql['select_main'] ) )
-				$sql['select_main'] .= ' ' . implode( ' ', $bpbd_select );
+		$user_query->query_vars['xprofile_query'] = $xprofile_query;
 
-			$sql['from'] .= ' ' . implode( ' ', $bpbd_from );
-			$sql['where'] .= ' ' . implode( ' ', $bpbd_where );
-
-			$s = join( ' ', (array)$sql );
-		}
-
-		return $s;
+		return;
 	}
 
 	public function filter_ajax_requests() {
@@ -189,7 +175,7 @@ class BPBD {
 
 		?>
 
-		<form id="bpbd-filter-form" method="get" action="<?php bp_root_domain() ?>/<?php bp_members_root_slug() ?>">
+		<form id="bpbd-filter-form" method="post" action="<?php bp_root_domain() ?>/<?php bp_members_root_slug() ?>">
 
 		<div id="bpbd-filters">
 			<h4><?php _e( 'Narrow Results', 'bpbd' ) ?> <span id="bpbd-clear-all"><a href="#">Clear All</a></span></h4>
@@ -202,7 +188,7 @@ class BPBD {
 			<?php endforeach ?>
 			</ul>
 
-			<input type="submit" class="button" value="<?php _e( 'Submit', 'bpdb' ) ?>" />
+			<input name="bpbd-submit" type="submit" class="button" value="<?php _e( 'Submit', 'bpdb' ) ?>" />
 		</div>
 
 		</form>
@@ -231,7 +217,7 @@ class BPBD {
 				<ul>
 				<?php foreach ( $options as $option ) : ?>
 					<li>
-						<input type="radio" name="<?php echo esc_attr( $field['slug'] ) ?>" value="<?php echo urlencode( $option->name ) ?>" <?php checked( $value, $option->name, true ) ?>/> <?php echo esc_html( $option->name ) ?>
+						<input type="radio" name="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" value="<?php echo urlencode( $option->name ) ?>" <?php checked( $value, $option->name, true ) ?>/> <?php echo esc_html( $option->name ) ?>
 					</li>
 				<?php endforeach ?>
 				</ul>
@@ -241,7 +227,7 @@ class BPBD {
 			case 'selectbox' :
 				?>
 
-				<select name="<?php echo esc_attr( $field['slug'] ) ?>">
+				<select name="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>">
 					<option value="">--------</option>
 					<?php foreach( $options as $option ) : ?>
 						<option <?php selected( $value, $option->name, true ) ?>><?php echo $option->name ?></option>
@@ -254,7 +240,7 @@ class BPBD {
 			case 'multiselectbox' :
 				?>
 
-				<select name="<?php echo esc_attr( $field['slug'] ) ?>[]" multiple="multiple">
+				<select name="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>[]" multiple="multiple">
 					<?php foreach( $options as $option ) : ?>
 						<option <?php if ( is_array( $value ) && in_array( $option->name, $value ) ) : ?>selected="selected"<?php endif ?>/><?php echo $option->name ?></option>
 					<?php endforeach ?>
@@ -269,7 +255,7 @@ class BPBD {
 				<ul>
 				<?php foreach ( (array)$options as $option ) : ?>
 					<li>
-						<input type="checkbox" name="<?php echo esc_attr( $field['slug'] ) ?>[]" value="<?php echo urlencode( $option->name ) ?>" <?php if ( is_array( $value ) && in_array( $option->name, $value ) ) : ?>checked="checked"<?php endif ?>/> <?php echo esc_html( $option->name ) ?>
+						<input type="checkbox" name="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>[]" value="<?php echo urlencode( $option->name ) ?>" <?php if ( is_array( $value ) && in_array( $option->name, $value ) ) : ?>checked="checked"<?php endif ?>/> <?php echo esc_html( $option->name ) ?>
 					</li>
 				<?php endforeach ?>
 				</ul>
@@ -280,7 +266,7 @@ class BPBD {
 			default :
 				?>
 
-				<input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="<?php echo esc_attr( $field['slug'] ) ?>" value=""/>
+				<input id="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" type="text" name="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" value=""/>
 
 				<ul class="bpbd-search-terms">
 				<?php if ( is_array( $value ) && !empty( $value ) ) : ?>
