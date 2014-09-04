@@ -14,24 +14,37 @@ class BPBD {
 		define( 'BPBD_INSTALL_DIR', trailingslashit( dirname(__FILE__) ) );
 		define( 'BPBD_INSTALL_URL', plugins_url() . '/bp-better-directories/' );
 
-		if ( version_compare( BP_VERSION, '1.3', '<' ) ) {
-			require( BPBD_INSTALL_DIR . 'includes/1.5-abstraction.php' );
-		}
-
 		if ( ! class_exists( 'BP_XProfile_Query' ) ) {
 			require( BPBD_INSTALL_DIR . 'includes/class-bp-xprofile-query.php' );
 		}
 
+		// WP-API endpoint
+		require( BPBD_INSTALL_DIR . 'includes/api.php' );
+
 		$this->setup_get_params();
+
+		if ( ! empty( $this->get_params ) ) {
+			add_filter( 'bp_pre_user_query_construct', array( $this, 'filter_user_query' ) );
+		}
+
+		add_filter( 'bp_get_template_stack', array( $this, 'add_template_stack_location' ) );
 
 		add_action( 'init', array( $this, 'setup' ) );
 
 		add_action( 'bp_actions', array( $this, 'catch_post_request' ) );
 
-		add_action( 'wp_ajax_members_filter', array( $this, 'filter_ajax_requests' ), 1 );
+		// Add the filter UI
+		add_action( 'bpbd_directory_filters', array( $this, 'filter_ui' ) );
+
+//		add_action( 'wp_ajax_members_filter', array( $this, 'filter_ajax_requests' ), 1 );
 
 		add_action( 'wp_print_styles', array( $this, 'enqueue_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+	}
+
+	public function add_template_stack_location( $stack ) {
+		$stack = array_merge( array( BPBD_INSTALL_DIR . 'templates' ), $stack );
+		return $stack;
 	}
 
 	public function setup() {
@@ -46,10 +59,6 @@ class BPBD {
 
 		if ( $is_members && !bp_is_single_item() ) {
 			// Filter the user query
-			add_filter( 'bp_pre_user_query_construct', array( $this, 'filter_user_query' ) );
-
-			// Add the filter UI
-			add_action( 'bp_before_directory_members', array( $this, 'filter_ui' ) );
 		}
 	}
 
@@ -94,31 +103,27 @@ class BPBD {
 
 		$potential_fields = isset( $_GET ) ? $_GET : array();
 
-		$cookie_fields = isset( $_COOKIE['bpbd-filters'] ) ? (array)json_decode( stripslashes( $_COOKIE['bpbd-filters'] ) ) : null;
-
-		if ( isset( $_COOKIE['bpbd-filters'] ) )
-			$potential_fields = array_merge( $potential_fields, $cookie_fields );
-
-		foreach ( (array)$filterable_keys as $filterable_key ) {
-			if ( !empty( $potential_fields[$filterable_key] ) ) {
+		foreach ( (array) $filterable_keys as $filterable_key ) {
+			$get_key = 'bpbd-filter-' . $filterable_key;
+			if ( ! empty( $potential_fields[ $get_key ] ) ) {
 
 				// Get the field id for keying the array
-				$field_id = $filterable_fields[$filterable_key]['id'];
+				$field_id = $filterable_fields[ $filterable_key ]['id'];
 
 				// Put the field data into the get_params property array
-				$this->get_params[$field_id] = $filterable_fields[$filterable_key];
+				$this->get_params[ $field_id ] = $filterable_fields[ $filterable_key ];
 
 				// Add the filtered value from $_GET
-				if ( is_array( $potential_fields[$filterable_key] ) ) {
+				if ( is_array( $potential_fields[ $get_key ] ) ) {
 					$values = array();
-					foreach( $potential_fields[$filterable_key] as $key => $value ) {
-						$values[$key] = urldecode( $value );
+					foreach( $potential_fields[ $get_key ] as $key => $value ) {
+						$values[ $key ] = urldecode( $value );
 					}
 				} else {
-					$values = urldecode( $potential_fields[$filterable_key] );
+					$values = urldecode( $potential_fields[ $get_key ] );
 				}
 
-				$this->get_params[$field_id]['value'] = $values;
+				$this->get_params[ $field_id ]['value'] = $values;
 			}
 		}
 
@@ -155,6 +160,8 @@ class BPBD {
 					break;
 			}
 		}
+
+		error_log( print_r( $xprofile_query, true ) );
 
 		$user_query->query_vars['xprofile_query'] = $xprofile_query;
 
@@ -289,14 +296,17 @@ class BPBD {
 	public function enqueue_styles() {
 		if ( bp_is_directory() && bp_is_members_component() ) {
 			wp_enqueue_style( 'jquery-loadmask-css', BPBD_INSTALL_URL . '/includes/lib/jquery.loadmask/jquery.loadmask.css' );
-			wp_enqueue_style( 'bpbd-css', BPBD_INSTALL_URL . '/includes/css/style.css' );
+//			wp_enqueue_style( 'bpbd-css', BPBD_INSTALL_URL . '/includes/css/style.css' );
 		}
 	}
 
 	public function enqueue_scripts() {
 		if ( bp_is_directory() && bp_is_members_component() ) {
-			wp_enqueue_script( 'jquery-loadmask', BPBD_INSTALL_URL . '/includes/lib/jquery.loadmask/jquery.loadmask.min.js', array( 'jquery' ) );
-			wp_enqueue_script( 'bpbd-js', BPBD_INSTALL_URL . '/includes/js/bpbd.js', array( 'jquery', 'dtheme-ajax-js', 'jquery-loadmask' ) );
+			wp_enqueue_script( 'bpbd-js', BPBD_INSTALL_URL . '/includes/js/bp-better-directories.js', array( 'wp-backbone' ) );
+
+			wp_localize_script( 'bpbd-js', 'BPBD', array(
+				'api_url' => bp_get_root_domain() . '/wp-json/bpbd/members/',
+			) );
 		}
 	}
 }

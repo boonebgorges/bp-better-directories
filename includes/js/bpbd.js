@@ -1,5 +1,4 @@
 jQuery(document).ready(function($) {
-	console.log('ok');
 	$('#bpbd-filters input[type="checkbox"]').live('click', function(value){
 		$('body div#content').mask('Loading...');
 		$('div.loadmask-msg').css('top', '300px');
