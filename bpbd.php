@@ -29,9 +29,7 @@ class BPBD {
 
 		add_filter( 'bp_get_template_stack', array( $this, 'add_template_stack_location' ) );
 
-		add_action( 'init', array( $this, 'setup' ) );
-
-		add_action( 'bp_actions', array( $this, 'catch_post_request' ) );
+//		add_action( 'bp_actions', array( $this, 'catch_post_request' ) );
 
 		// Add the filter UI
 		add_action( 'bpbd_directory_filters', array( $this, 'filter_ui' ) );
@@ -45,21 +43,6 @@ class BPBD {
 	public function add_template_stack_location( $stack ) {
 		$stack = array_merge( array( BPBD_INSTALL_DIR . 'templates' ), $stack );
 		return $stack;
-	}
-
-	public function setup() {
-		global $bp;
-
-		// Temporary backpat for 1.2
-		if ( function_exists( 'bp_is_current_component' ) ) {
-			$is_members = bp_is_current_component( 'members' );
-		} else {
-			$is_members = $bp->members->slug == bp_current_component();
-		}
-
-		if ( $is_members && !bp_is_single_item() ) {
-			// Filter the user query
-		}
 	}
 
 	/**
