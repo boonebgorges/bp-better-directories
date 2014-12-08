@@ -74,7 +74,7 @@ class BPBD {
 	}
 
 	public function setup_get_params() {
-		$filterable_fields = get_blog_option( BP_ROOT_BLOG, 'bpdb_fields' );
+		$filterable_fields = bp_get_option( 'bpdb_fields' );
 
 		// Set so it can be used object-wide
 		$this->filterable_fields = $filterable_fields;
