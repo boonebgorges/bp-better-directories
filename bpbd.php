@@ -1,8 +1,8 @@
 <?php
 
 class BPBD {
-	public $get_params = array();
-	public $filterable_fields = array();
+	public $get_params;
+	public $filterable_fields;
 
 	/**
 	 * PHP 5 constructor
@@ -21,11 +21,7 @@ class BPBD {
 		// WP-API endpoint
 		require( BPBD_INSTALL_DIR . 'includes/api.php' );
 
-		$this->setup_get_params();
-
-		if ( ! empty( $this->get_params ) ) {
-			add_filter( 'bp_pre_user_query_construct', array( $this, 'filter_user_query' ) );
-		}
+		add_action( 'bp_pre_user_query_construct', array( $this, 'filter_user_query' ) );
 
 		add_filter( 'bp_get_template_stack', array( $this, 'add_template_stack_location' ) );
 
@@ -73,11 +69,28 @@ class BPBD {
 		}
 	}
 
-	public function setup_get_params() {
-		$filterable_fields = bp_get_option( 'bpdb_fields' );
+	public function get_filterable_fields() {
+		if ( null === $this->filterable_fields ) {
+			$filterable_fields = bp_get_option( 'bpdb_fields' );
 
-		// Set so it can be used object-wide
-		$this->filterable_fields = $filterable_fields;
+			foreach ( $filterable_fields as &$ff ) {
+				if ( ! isset( $ff['is_xprofile_field'] ) ) {
+					$ff['is_xprofile_field'] = true;
+				}
+			}
+
+			$this->filterable_fields = apply_filters( 'bpbd_filterable_fields', $filterable_fields );
+		}
+
+		return $this->filterable_fields;
+	}
+
+	public function get_get_params() {
+		if ( null !== $this->get_params ) {
+			return $this->get_params;
+		}
+
+		$filterable_fields = $this->get_filterable_fields();
 
 		$filterable_keys = array();
 		if ( is_array( $filterable_fields ) ) {
@@ -110,6 +123,8 @@ class BPBD {
 			}
 		}
 
+		return $this->get_params;
+
 		// Todo: sort order?
 	}
 
@@ -119,7 +134,16 @@ class BPBD {
 			$xprofile_query = (array) $user_query->query_vars['xprofile_query'];
 		}
 
-		foreach ( $this->get_params as $field_id => $field ) {
+		$get_params = $this->get_get_params();
+
+		// Filter out get_params that are not related to xprofile.
+		foreach ( $get_params as $gp_key => $gp ) {
+			if ( empty( $gp['is_xprofile_field'] ) ) {
+				unset( $get_params[ $gp_key ] );
+			}
+		}
+
+		foreach ( (array) $get_params as $field_id => $field ) {
 			switch ( $field['type'] ) {
 				case 'textbox' :
 					$xprofile_query[] = array(
@@ -158,7 +182,9 @@ class BPBD {
 	}
 
 	public function filter_ui() {
-		if ( empty( $this->filterable_fields ) ) {
+		$filterable_fields = $this->get_filterable_fields();
+
+		if ( empty( $filterable_fields ) ) {
 			// Nothing to see here.
 			return;
 		}
@@ -171,14 +197,14 @@ class BPBD {
 			<h4><?php _e( 'Narrow Results', 'bpbd' ) ?> <span id="bpbd-clear-all"><a href="#">Clear All</a></span></h4>
 
 			<ul>
-			<?php foreach ( $this->filterable_fields as $slug => $field ) : ?>
+			<?php foreach ( $filterable_fields as $slug => $field ) : ?>
 				<li id="bpbd-filter-crit-<?php echo esc_attr( $field['slug'] ) ?>" class="bpbd-filter-crit bpbd-filter-crit-type-<?php echo esc_attr( $field['type'] ) ?>">
 					<?php $this->render_field( $field ) ?>
 				</li>
 			<?php endforeach ?>
 			</ul>
 
-			<input name="bpbd-submit" type="submit" class="button" value="<?php _e( 'Submit', 'bpdb' ) ?>" />
+			<input id="bpbd-submit" name="bpbd-submit" type="submit" class="button" value="<?php _e( 'Submit', 'bpdb' ) ?>" />
 		</div>
 
 		</form>
@@ -186,6 +212,13 @@ class BPBD {
 	}
 
 	public function render_field( $field ) {
+		// Bypass in your own plugin. Barf.
+		if ( apply_filters( 'bpbd_pre_render_field', false, $field, $this ) ) {
+			return;
+		}
+
+		$get_params = $this->get_get_params();
+
 		?>
 
 		<label for="<?php echo esc_attr( $field['slug'] ) ?>"><?php echo esc_html( $field['name'] ) ?> <span class="bpbd-clear-this"><a href="#">Clear</a></span></label>
@@ -197,7 +230,7 @@ class BPBD {
 		$options = $field_data->get_children();
 
 		// Get the current value for this item, if any, out of the $_GET params
-		$value = isset( $this->get_params[$field['id']] ) ? $this->get_params[$field['id']]['value'] : false;
+		$value = isset( $get_params[$field['id']] ) ? $get_params[$field['id']]['value'] : false;
 
 		// Display the field based on type
 		switch ( $field['type'] ) {
@@ -267,8 +300,7 @@ class BPBD {
 				<?php endif ?>
 				</ul>
 
-				<?php /* Comma-separated string */ ?>
-				<input class="bpbd-hidden-value" id="bpbd-filter-value-<?php echo esc_attr( $field['slug'] ) ?>" type="hidden" name="bpbd-filter-value-<?php echo esc_attr( $field['slug'] ) ?>" value="<?php echo esc_attr( implode( ',', (array)$value ) ) ?>" />
+				<input class="bpbd-hidden-value" id="bpbd-filter-value-<?php echo esc_attr( $field['slug'] ) ?>" type="hidden" name="bpbd-filter-<?php echo esc_attr( $field['slug'] ) ?>" value="<?php echo esc_attr( implode( ',', (array)$value ) ) ?>" />
 
 				<?php
 
