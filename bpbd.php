@@ -30,8 +30,6 @@ class BPBD {
 		// Add the filter UI
 		add_action( 'bpbd_directory_filters', array( $this, 'filter_ui' ) );
 
-//		add_action( 'wp_ajax_members_filter', array( $this, 'filter_ajax_requests' ), 1 );
-
 		add_action( 'wp_print_styles', array( $this, 'enqueue_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
@@ -168,17 +166,9 @@ class BPBD {
 			}
 		}
 
-		error_log( print_r( $xprofile_query, true ) );
-
 		$user_query->query_vars['xprofile_query'] = $xprofile_query;
 
 		return;
-	}
-
-	public function filter_ajax_requests() {
-		header("Cache-Control: no-cache, must-revalidate");
-		add_filter( 'bp_core_get_paged_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
-		add_filter( 'bp_core_get_total_users_sql', array( $this, 'users_sql_filter' ), 10, 2 );
 	}
 
 	public function filter_ui() {
