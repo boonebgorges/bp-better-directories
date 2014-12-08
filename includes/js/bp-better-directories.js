@@ -4,7 +4,7 @@ window.wp = window.wp || {};
 	$( document ).ready( function() {
 
 		/**
-		 * Member result
+		 * Member model.
 		 */
 		var BpbdMember = Backbone.Model.extend( {
 			initialize: function( singleData ) {
@@ -27,47 +27,26 @@ window.wp = window.wp || {};
 		 */
 		BpbdMemberCollection = Backbone.Collection.extend( {
 			columnNames: null,
-			search: '',
+			filters: null,
+			model: BpbdMember,
 
 			setup: function( args ){
 				this.columnNames = args;
 			},
 
-			searchFor: function( search ) {
+			searchFor: function( filters ) {
 				var self = this;
+				self.filters = filters;
 				this.fetch( {
-					data: search,
-					reset: true,
+					data: filters,
 					success: function( collection, response, options ) {
 						self.trigger( 'change' );
-//						console.log( collection );
-//						console.log( response );
-//						console.log( options );
 					}
 				} );
-//				this.search = search;
 			}
 		} );
 
 		/** Views ****************************************************/
-
-		/**
-		 * The person display view - display the card of a single person
-		 */
-		BpbdMemberDisplay = Backbone.View.extend({
-
-			template:  wp.template( 'backbone_person' ),
-			el:        '#backbone_card',
-
-			initialize: function() {
-				this.listenTo( this.model, 'change', this.render );
-			},
-
-			render: function() {
-				this.$el.html( this.template( this.model.attributes ) );
-				return this;
-			}
-		}),
 
 		/**
 		 * The filter bar
@@ -124,7 +103,10 @@ window.wp = window.wp || {};
 
 							all_values[ field_name_clean ].push( $this_field.val() );
 						}
-					} else {
+
+					// Skip the submit button
+					} else if ( field_name != 'bpbd-submit' ) {
+						// TODO - support multiple text input
 						field_value = $this_field.val();
 
 						if ( '' != field_value ) {
@@ -148,22 +130,11 @@ window.wp = window.wp || {};
 		 * The Grid view - displays the directory grid
 		 */
 		BpbdDisplayList = Backbone.View.extend({
-			members: null, /* the collection of BpbdMember */
-			el:       '#members-list',
-			msnry:    null,
-			template:  wp.template( 'bpbd_member' ),
-
-			events: {
-				'click .backbone_person-card': 'clickackbonePerson'
-			},
-
-			clickackbonePerson: function( person ) {
-				console.log( 'triggering personDetail' );
-				this.trigger( 'detailView', person );
-			},
+			members: null,
+			el: '#members-list',
+			template: wp.template( 'bpbd_member' ),
 
 			initialize: function( options ) {
-				console.log( 'BpbdDisplayList.initialize' );
 				this.members = options.members;
 				this.router = options.router;
 				this.listenTo( this.members, 'change', this.searchChanged );
@@ -175,10 +146,12 @@ window.wp = window.wp || {};
 
 			adjustSearch: function() {
 
-				// If the search string is blank, don't include '?search=' string in navigation
-				//var navigateto = ( '' === this.members.search ) ? '' : '?search=' + this.members.search;
-//				this.router.navigate( navigateto, { replace: false } );
-				console.log( 'BpbdDisplayList:rerendering after change'  );
+				// $.param builds the querystring from the filter object
+				var navigate_to = '';
+				if ( ! $.isEmptyObject( this.members.filters ) ) {
+					navigate_to = '?' + $.param( this.members.filters );
+				}
+				this.router.navigate( navigate_to, { replace: false } );
 				this.render();
 			},
 
@@ -209,25 +182,15 @@ window.wp = window.wp || {};
 		 */
 		BpbdRouter = Backbone.Router.extend({
 			routes: {
-				'?details=:name': 'openbackbonePerson',
-				'?search=:search': 'performSearch'
+				'?bpbd-do-filter&*queryString': 'performSearch'
 			},
 
 			baseURL: function() {
 				return window.location.pathname;
 			},
 
-			openbackbonePerson: function( name ) {
-				console.log( 'route: ' + name + ' ' );
-				// find the model
-				BackboneDirectoryApp.personDetail.model = BackboneDirectoryApp.backbonePeople.where({ 'name': name })[0];
-				BackboneDirectoryApp.personDetail.render();
-			},
-
 			performSearch: function( s ) {
-				console.log( 'Router::performSearch' );
-				$( 'input#backbone_person-search-field' ).val( s ).trigger( 'keypress' ).select();
-				BackboneDirectoryApp.personDetail.hidePersonDetailDialog();
+				BpbdApp.filter_bar.do_filter();
 			}
 		}),
 
@@ -242,18 +205,16 @@ window.wp = window.wp || {};
 				self.members.url = BPBD.api_url;
 				fetched = self.members.fetch();
 				fetched.done( function( results ) {
-					console.log( results );
 					self.bpbd_router = new BpbdRouter();
-					self.bpbd_member_display = new BpbdMemberDisplay( {
-						model: new BpbdMember()
-					});
 					var options = {
 						'members': self.members,
 						'router': self.bpbd_router
 					};
 					self.display_list = new BpbdDisplayList( options );
 
-					var filter_bar = new BpbdFilterBar( options );
+					self.filter_bar = new BpbdFilterBar( options );
+
+					self.bpbd_router.performSearch();
 
 					self.display_list.render();
 				});
@@ -268,6 +229,15 @@ window.wp = window.wp || {};
 					pushState: true,
 					root: window.location.pathname
 				} );
+
+				$( '#bpbd-submit' ).on( 'click', function() {
+					BpbdApp.process_submit();
+					return false;
+				} );
+			},
+
+			process_submit: function() {
+				console.log( 'ok' );
 			}
 		};
 
