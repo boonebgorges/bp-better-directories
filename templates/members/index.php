@@ -39,7 +39,9 @@
 	</script>
 
 	<script id="tmpl-bpbd_filters" type="text/html">
+		<?php /*
 		<input id="bpbd-search" name="bpbd-search" type="text" placeholder="Search" value="{{ data }}">
+		*/ ?>
 
 		<?php do_action( 'bpbd_directory_filters' ) ?>
 	</script>
@@ -61,7 +63,6 @@
 			</ul>
 		</div><!-- .item-list-tabs -->
 
-		<div id="bpbd-filters"></div>
 
 		<div class="item-list-tabs" id="subnav" role="navigation">
 			<ul>

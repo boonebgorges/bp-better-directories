@@ -30,7 +30,7 @@ class BPBD {
 		// Add the filter UI
 		add_action( 'bpbd_directory_filters', array( $this, 'filter_ui' ) );
 
-		add_action( 'wp_print_styles', array( $this, 'enqueue_styles' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 
@@ -300,8 +300,8 @@ class BPBD {
 
 	public function enqueue_styles() {
 		if ( bp_is_directory() && bp_is_members_component() ) {
-			wp_enqueue_style( 'jquery-loadmask-css', BPBD_INSTALL_URL . '/includes/lib/jquery.loadmask/jquery.loadmask.css' );
-//			wp_enqueue_style( 'bpbd-css', BPBD_INSTALL_URL . '/includes/css/style.css' );
+//			wp_enqueue_style( 'jquery-loadmask-css', BPBD_INSTALL_URL . '/includes/lib/jquery.loadmask/jquery.loadmask.css' );
+			wp_enqueue_style( 'bpbd-css', BPBD_INSTALL_URL . '/includes/css/style.css' );
 		}
 	}
 
