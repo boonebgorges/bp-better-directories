@@ -1,5 +1,4 @@
 #bpbd-filters {
-	margin-top: 70px;
 	vertical-align: top;
 	width: 300px;
 	float: left;
@@ -39,10 +38,6 @@ ul.bpbd-search-terms li {
 
 
 /* BP-DEFAULT OVERRIDES */
-body.members.directory #subnav, 
-body.members.directory #members-dir-list {
-	padding-left: 325px;
-}
 
 form#members-directory-form h3 {
 	margin-left: -300px;
@@ -62,6 +57,11 @@ div#members-dir-list ul.item-list li {
 
 div#members-dir-list ul.item-list li div.clear {
 	clear:none;
+}
+
+#buddypress ul.item-list#members-list {
+	margin-left: 340px;
+	clear: none;
 }
 
 /* LOADMASK */
